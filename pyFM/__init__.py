@@ -116,7 +116,7 @@ class FM:
             raise OSError("libFM is not checked out to the correct commit."
                           "(https://github.com/jfloff/pywFM#installing).")
 
-    def run(self, trainset, testset, validation_set=None, meta=None):
+    def run(self, train_set, test_set, validation_set=None, meta=None):
         """Run factorization machine model against train and test data
         Parameters
         ----------
@@ -164,8 +164,8 @@ class FM:
         # builds arguments array
         args = [os.path.join(self.__libfm_path, "libFM"),
                 '-task', "%s" % self.__task,
-                '-train', "%s" % trainset, ### modify from train_fd.name
-                '-test', "%s" % testset,
+                '-train', "%s" % train_set, ### modify from train_fd.name
+                '-test', "%s" % test_set,
                 '-dim', "'%s'" % self.__dim,
                 '-init_stdev', "%g" % self.__init_stdev,
                 '-iter', "%d" % self.__num_iter,
