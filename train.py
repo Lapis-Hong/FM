@@ -5,9 +5,11 @@ from prepareData.fm_index import *
 from prepareData.embeddingIndexInit import *
 
 
-ORIGINAL_DATA_PATH = ['/home/apps/jarfile/lxt/libfm/trainAndpredict/prepareData/fmtrain20170403.libsvm',
-                      '/home/apps/jarfile/lxt/libfm/trainAndpredict/prepareData/fmtrain20170404.libsvm',
-                      '/home/apps/jarfile/lxt/libfm/trainAndpredict/prepareData/fmtrain20170404.libsvm']
+LIBFM_DATA_FILE = ['fmtrain20170403.libfm'
+                      #'/home/apps/jarfile/lxt/libfm/trainAndpredict/prepareData/fmtrain20170403.libsvm',
+                      #'/home/apps/jarfile/lxt/libfm/trainAndpredict/prepareData/fmtrain20170404.libsvm',
+                      #'/home/apps/jarfile/lxt/libfm/trainAndpredict/prepareData/fmtrain20170404.libsvm'
+]
 MODEL_DIR = 'model'
 MODEL_FILE = 'model'
 LATENT_FILE = 'latent'
@@ -25,10 +27,11 @@ def make_path(name):
     return name
 
 
+convert_libfm(data_libsvm_file, data_temp_file, data_libfm_file)
 # trainData, testData = map(split_data, ORIGINAL_DATA_PATH, TRAIN_PATH*len(), TEST_PATH)
-for i in range(len(ORIGINAL_DATA_PATH)):
-    split_data(ORIGINAL_DATA_PATH[i], TRAIN_FILE, TEST_FILE)
-    print('%s split completed, writing train data into %s' % (ORIGINAL_DATA_PATH[i], TRAIN_FILE))
+for i in range(len(LIBFM_DATA_FILE)):
+    split_data(LIBFM_DATA_FILE[i], TRAIN_FILE, TEST_FILE)
+    print('%s split completed, writing train data into %s' % (LIBFM_DATA_FILE[i], TRAIN_FILE))
 
 # set the parameter of FM
 fm = pyFM.FM(

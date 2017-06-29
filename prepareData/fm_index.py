@@ -13,6 +13,8 @@ DATA_DIR = 'data'
 if os.path.exists(DATA_DIR):
     shutil.rmtree(DATA_DIR)
 
+os.mkdir(DATA_DIR)
+
 
 def gen_path(directory, filename):
     return os.path.join(directory, filename)
@@ -75,7 +77,7 @@ def split_data(file_path, train_file, test_file, k=5):
     """
     with open(os.path.join(DATA_DIR, train_file), 'w') as fm_train, \
             open(os.path.join(DATA_DIR, test_file), 'w') as fm_test, \
-            open(file_path) as train_data:
+            open(os.path.join(DATA_DIR, file_path)) as train_data:
         line = train_data.readline()
         count = 1
         while line:
