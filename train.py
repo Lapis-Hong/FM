@@ -4,28 +4,18 @@ from embedding import *
 from prepareData.fm_index import *
 from prepareData.embeddingIndexInit import *
 
-
 LIBFM_DATA_FILE = ['fmtrain20170403.libfm'
-                      #'/home/apps/jarfile/lxt/libfm/trainAndpredict/prepareData/fmtrain20170403.libsvm',
-                      #'/home/apps/jarfile/lxt/libfm/trainAndpredict/prepareData/fmtrain20170404.libsvm',
-                      #'/home/apps/jarfile/lxt/libfm/trainAndpredict/prepareData/fmtrain20170404.libsvm'
-]
-MODEL_DIR = 'model'
-MODEL_FILE = 'model'
+                   # '/home/apps/jarfile/lxt/libfm/trainAndpredict/prepareData/fmtrain20170403.libsvm',
+                   # '/home/apps/jarfile/lxt/libfm/trainAndpredict/prepareData/fmtrain20170404.libsvm',
+                   # '/home/apps/jarfile/lxt/libfm/trainAndpredict/prepareData/fmtrain20170404.libsvm'
+                   ]
+OUTPUT_DIR = 'output'
 LATENT_FILE = 'latent'
 EMBEDDING_FILE = 'embeddingData'
 
-MODEL_PATH = gen_path(MODEL_DIR, MODEL_FILE)
-LATENT_PATH = gen_path(MODEL_DIR, MODEL_FILE)
-EMBEDDING_PATH = gen_path(MODEL_DIR, EMBEDDING_FILE)
-
-
-def make_path(name):
-    if os.path.exists(name):
-        os.rmdir(name)
-        os.mkdir(name)
-    return name
-
+MODEL_PATH = 'model'  # save the FM original model result
+LATENT_PATH = gen_path(OUTPUT_DIR, LATENT_FILE)
+EMBEDDING_PATH = gen_path(OUTPUT_DIR, EMBEDDING_FILE)
 
 convert_libfm(data_libsvm_file, data_temp_file, data_libfm_file)
 # trainData, testData = map(split_data, ORIGINAL_DATA_PATH, TRAIN_PATH*len(), TEST_PATH)
@@ -50,7 +40,7 @@ model = fm.run(
     train_set=TRAIN_FILE,
     test_set=TEST_FILE)
 time_end = time.time()
-print("FM training is finished. Taking %s sec." % (time_end-time_start))
+print("FM training is finished. Taking %s sec." % (time_end - time_start))
 
 # save the latent vectors
 latent = model.pairwise_interactions

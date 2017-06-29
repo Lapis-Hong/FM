@@ -9,21 +9,16 @@ TRAIN_FILE = 'train'
 TEST_FILE = 'test'
 DATA_DIR = 'data'
 
-# if exists dir, remove it, os.rmdir can only remove empty dir
-if os.path.exists(DATA_DIR):
-    shutil.rmtree(DATA_DIR)
-
-os.mkdir(DATA_DIR)
-
 
 def gen_path(directory, filename):
     return os.path.join(directory, filename)
 
 
-def make_path(name):
-    if os.path.exists(name):
-        os.rmdir(name)
-        os.mkdir(name)
+# if exists dir, remove it, os.rmdir can only remove empty dir
+def make_path(dirname):
+    if os.path.exists(dirname):
+        shutil.rmtree(dirname)
+    os.mkdir(dirname)
 
 
 def convert_libfm(input_file, temp_file, output_file):
@@ -91,5 +86,6 @@ def split_data(file_path, train_file, test_file, k=5):
 
 
 if __name__ == '__main__':
+    make_path(DATA_DIR)
     convert_libfm(data_libsvm_file, data_temp_file, data_libfm_file)
     split_data(data_libfm_file, TRAIN_FILE, TEST_FILE)
