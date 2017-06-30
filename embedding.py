@@ -1,9 +1,9 @@
 def load_latent(file_path):
-    '''
+    """
     :param file_path: latent vector path
     :return: list format latent vector, 
     like [[-0.145157, -0.101264, 0.0266148, -0.123098, -0.10167, 0.10267, 0.0328743, -0.20144], [-0.105264, -0.
-    '''
+    """
     with open(file_path) as model:
         f = model.read()
         # latentVec = [[str(w) for w in line] for line in latentVec]
@@ -11,19 +11,19 @@ def load_latent(file_path):
 
 
 def latent_embedding(file_path, latent, index_list):
-    '''
+    """
     take the fm latent vectors as the embedding features, generate new data
-    :param file_path: train data path
+    :param file_path: prd data path with libfm format
     :param latent: latent vector
     :param index_list: embedding feature index list
     :return: new data with embedding features
-    '''
+    """
     new_data = []
-    with open(file_path) as train_data:
-        for line in train_data:
+    with open(file_path) as f:
+        for line in f:
             embedding_feature = []
             temp = line.strip('\n').split(' ')
-            embedding_feature.append(temp.pop(0))  # add target to the first col
+            embedding_feature.append(temp.pop(0))  # add order_id to the first col, string
             feature_index = [int(w.split(':')[0]) for w in temp if int(
                 w.split(':')[0]) in index_list]  # save the embedding feature from training data(with value 1)
             for embedding_ind in index_list:
