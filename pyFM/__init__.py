@@ -87,7 +87,7 @@ class FM:
                  seed=None,
                  silent=False,
                  temp_path=None):
-        self.__task = task[0] # gets first letter of either regression or classification
+        self.__task = task[0]  # gets first letter of either regression or classification
         self.__num_iter = num_iter
         self.__init_stdev = init_stdev
         self.__dim = "%d,%d,%d" % (int(k0), int(k1), k2)
@@ -99,7 +99,7 @@ class FM:
         self.__seed = int(seed) if seed else None
         self.__silent = silent
         self.__temp_path = temp_path
-        self.__libfm_path = os.environ.get('LIBFM_PATH') # gets libfm path
+        self.__libfm_path = os.environ.get('LIBFM_PATH')  # gets libfm path
         if self.__libfm_path is None:
             raise OSError("`LIBFM_PATH` is not set. Please install libFM and set the path variable "
                           "(https://github.com/jfloff/pywFM#installing).")
@@ -277,3 +277,5 @@ class FM:
                                               'pairwise_interactions',
                                               'rlog'])
         return fm(preds, global_bias, weights, pairwise_interactions, rlog)
+
+
