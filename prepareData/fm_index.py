@@ -80,18 +80,33 @@ def split_data(libfm_file, train_file, test_file, k=5):
     return os.path.abspath(train_file), os.path.abspath(test_file)
 
 
-def feature_target_split(test_file):
+def feature_target_split(file):
     """
-    :param test_file: 
+    :param file: original filename
     :return: target and feature 
     """
-    with open(test_file) as f:
+    with open(file) as f:
         target = []
         feature = []
+        index_mapping = get_new_index(file)
+        index_set = set(index_mapping.keys())
         for line in f:
-            temp = line.strip('\n').split(' ')
-            target.append(float(temp.pop(0)))
-            feature.append([float(w.split(':')[1]) for w in temp])
+            line = line.strip('\n').split(' ')
+            label = line.pop(0)
+            if float(label) == 1.0:
+                target.append(float(label))
+            else:
+                target.append(-1.0)
+            temp = []
+            index = set([float(w.split(':')[0]) for w in line])
+            value = [float(w.split(':')[1]) for w in line]
+            dic = {k:v for k, v in zip(index, value)}  # generate index and value dict
+            for i in index_set:
+                if i in index:
+                    temp.append(dic[i])
+                else:
+                    temp.append(0)
+            feature.append(temp)
         return target, feature
 
 
