@@ -55,7 +55,7 @@ class FM:
         seed used to reproduce the results
         Defaults to None.
     silent: bool, optional
-        Completly silences all libFM output
+        Completely silences all libFM output
         Defaults to False.
     temp_path: string, optional
         Sets path for libFM temporary files. Useful when dealing with large data.

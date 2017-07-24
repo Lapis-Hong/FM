@@ -1,4 +1,6 @@
 from cPickle import dump, load
+from prepareData import clock
+from conf import *
 
 def load_latent(infile):
     """
@@ -18,6 +20,7 @@ def save_data(data, file_path):
         f.write(str(data))
 
 
+@clock('Successfully saved embedding data into %s. Take {} sec.' % (EMBEDDING_PATH))
 def latent_embedding(infile, latent):
     """
     take the fm latent vectors as the embedding features, generate new data
@@ -37,8 +40,6 @@ def latent_embedding(infile, latent):
                 embedding.extend(latent[int(w)])
             new_data.append(embedding)
     return new_data
-
-
 
 
 

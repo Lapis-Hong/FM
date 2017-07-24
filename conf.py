@@ -42,4 +42,4 @@ _make_path(DATA_DIR)
 _make_path(OUTPUT_DIR)
 #_make_path(MODEL_PATH)
 
-TABLE_NAME = 'temp_jrd.wphorder_used_fm_embedding'
+TABLE_NAME = 'temp_jrd.pre_credit_user_feature_fm_embedding'
