@@ -59,7 +59,7 @@ def convert_libfm(infile, outfile, isprd=False, reindex=False):
                     libfm.write(' ' + str(feature_index_new) + ':' + feature_value)
             libfm.write('\n')
             if (lineno + 1) % 100000 == 0:
-                print('Already convert %s samples ' % lineno)
+                print('Already convert %s samples ' % (lineno + 1))
 
 
 @clock('Train test split completed, Take {} sec.')
@@ -72,16 +72,17 @@ def split_data(libfm_file, train_file, test_file, train_ratio=0.75):
     :param train_ratio:
     :return: the libFM train and test data path
     """
-    df = pd.read_csv(os.path.join(DATA_DIR, libfm_file), header=None)
-    n, m = df.shape
-    train = df.sample(frac=train_ratio)
-    train_length = train.shape[0]
-    train.to_csv(os.path.join(DATA_DIR, train_file), index=False, header=None)
-    test_index = set(df.index) - set(train.index)
-    test = df.iloc[list(test_index), :]
-    test_length = test.shape[0]
-    test.to_csv(os.path.join(DATA_DIR, test_file), index=False, header=None)
-    print('Totol data length: {}, feature number: {}'.format(n, m))
+    train_length, test_length=0
+    for df in pd.read_csv(os.path.join(DATA_DIR, libfm_file), header=None, chunksize=200000):
+        # n, m = df.shape
+        train = df.sample(frac=train_ratio)
+        train_length += train.shape[0]
+        train.to_csv(os.path.join(DATA_DIR, train_file), index=False, header=None)
+        test_index = set(df.index) - set(train.index)
+        test = df.iloc[list(test_index), :]
+        test_length += test.shape[0]
+        test.to_csv(os.path.join(DATA_DIR, test_file), index=False, header=None)
+        # print('Totol data length: {}, feature number: {}'.format(n, m))
     print('Train data length: {}'.format(train_length))
     print('Test data length:{}'.format(test_length))
     return os.path.abspath(train_file), os.path.abspath(test_file)
