@@ -31,8 +31,9 @@ def remove_zero_sed(infile, outfile):
 
 @clock()
 def remove_zero(infile, outfile):
-    awk_command = 'awk \'{printf $1} {for(i=2; i<=NF; i++){if($i ~/:1/){printf " "$i}}} {print " "}\' '
+    awk_command = 'awk \'{printf $1} {for(i=2; i<=NF; i++){if($i !~/:0/){printf " "$i}}} {print " "}\' '
     cmd = awk_command + infile + ">" + outfile
+    print('The shell command is:{}'.format(cmd))
     subprocess.check_call(cmd, shell=True)
 
 
@@ -40,13 +41,15 @@ def remove_zero(infile, outfile):
 def relabel(infile, outfile):
     awk_command = 'awk \'{if($1==0){$1=-1}}{print $0}\' '  # need a space
     cmd = awk_command + infile + ">" + outfile
+    print('The shell command is:{}'.format(cmd))
     subprocess.call(cmd, shell=True)
 
 
-@clock()
+@clock('Successfully convert to the libfm format!')
 def relabel_and_remove_zero(infile, outfile):
-    awk_command = 'awk \'{if($1==0){$1=-1}} {printf $1} {for(i=2; i<=NF; i++){if($i ~/:1/){printf " "$i}}} {print " "}\' '
+    awk_command = 'awk \'{if($1==0){$1=-1}} {printf $1} {for(i=2; i<=NF; i++){if($i !~/:0/){printf " "$i}}} {print " "}\' '
     cmd = awk_command + infile + ">" + outfile
+    print('The shell command is:{}'.format(cmd))
     subprocess.check_call(cmd, shell=True)
 
 
@@ -57,6 +60,7 @@ def feature_target_split():
 def gen_libsvm(infile, outfile):
     awk_command = 'awk \'{printf $1} {for(i=2; i<=NF; i++) {printf "  "i-1":"$i}} {print " "}\' '
     cmd = awk_command + infile + ">" + outfile
+    print('The shell command is:{}'.format(cmd))
     subprocess.check_call(cmd, shell=True)
 
 

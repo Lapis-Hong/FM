@@ -45,6 +45,8 @@ def parse_transform(transform_dict):
                 transform_list.append(('standard_scaler', field_name))
             elif transform.startswith('Untransform'):
                 pass
+            elif transform is None:
+                transform_list.append(('delete', field_name))
             else:
                 raise Exception('transform {} of field {} is not found, please check the transform'.format(transform, field_name))
     print('There are {} features need to transform'.format(len(transform_list)))
@@ -63,6 +65,8 @@ def transform_pipeline(data, transform):
             df = onehot(data, inputCol=item[1], outputCol=item[1]+'trans', drop=True)
         elif item[0] == 'standard_scaler':
             df = standard_scaler(data, inputCol=item[1], outputCol=item[1]+'trans', drop=True)
+        elif item[0] == 'delete':
+            df = df.drop(item[1])
         data = df
         print('The {}th feature: {} transform: {} has finished, take {} sec.'.format(index, item[0], item[1], time.time()-t0))
     print('Feature transform has done!')
@@ -78,7 +82,6 @@ if __name__ == '__main__':
     # spark = SparkSession.builder.config(conf=conf).enableHiveSupport().getOrCreate()
     dataset = read_from_hive()
     start_spark()
-    trans_dic = {config.fieldname[i]: config.transform[i] for i in range(len(config))}
     transformers = parse_transform(trans_dic)
     data_transformed = transform_pipeline(dataset, transformers)
     print(data_transformed.first())

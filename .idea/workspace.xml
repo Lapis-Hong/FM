@@ -2,7 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="04673d38-61e8-4d27-a15d-8fc54176a80a" name="Default" comment="update">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data_process/feature_transform.py" afterPath="$PROJECT_DIR$/data_process/feature_transform.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data_process/mysql.py" afterPath="$PROJECT_DIR$/data_process/mysql.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data_process/shell.py" afterPath="$PROJECT_DIR$/data_process/shell.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -76,7 +78,7 @@
       <file leaf-file-name="embedding.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/embedding.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2222">
+            <state relative-caret-position="511">
               <caret line="101" column="0" lean-forward="false" selection-start-line="101" selection-start-column="0" selection-end-line="101" selection-end-column="0" />
               <folding>
                 <element signature="e#0#30#0" expanded="true" />
@@ -100,12 +102,12 @@
       <file leaf-file-name="mysql.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/data_process/mysql.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="352">
-              <caret line="16" column="6" lean-forward="false" selection-start-line="16" selection-start-column="6" selection-end-line="16" selection-end-column="6" />
+            <state relative-caret-position="257">
+              <caret line="15" column="115" lean-forward="false" selection-start-line="15" selection-start-column="115" selection-end-line="15" selection-end-column="115" />
               <folding>
                 <element signature="e#24#43#0" expanded="true" />
-                <marker date="1501571406000" expanded="true" signature="229:262" ph="select col_n... itf_datadic_dtl_d" />
-                <marker date="1501571406000" expanded="true" signature="229:319" ph="select field... featuremetadata" />
+                <marker date="1501579108000" expanded="true" signature="229:262" ph="select col_n... itf_datadic_dtl_d" />
+                <marker date="1501579108000" expanded="true" signature="229:337" ph="select field... featuremetadata" />
               </folding>
             </state>
           </provider>
@@ -114,8 +116,8 @@
       <file leaf-file-name="python.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/data_process/python.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="377">
-              <caret line="91" column="0" lean-forward="false" selection-start-line="91" selection-start-column="0" selection-end-line="91" selection-end-column="0" />
+            <state relative-caret-position="193">
+              <caret line="32" column="50" lean-forward="false" selection-start-line="32" selection-start-column="7" selection-end-line="32" selection-end-column="50" />
               <folding>
                 <element signature="e#60#75#0" expanded="true" />
                 <element signature="e#1387#1610#1" expanded="false" />
@@ -129,13 +131,25 @@
       <file leaf-file-name="feature_transform.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/data_process/feature_transform.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="62">
-              <caret line="52" column="0" lean-forward="false" selection-start-line="52" selection-start-column="0" selection-end-line="52" selection-end-column="0" />
+            <state relative-caret-position="659">
+              <caret line="68" column="31" lean-forward="false" selection-start-line="68" selection-start-column="31" selection-end-line="68" selection-end-column="31" />
               <folding>
                 <element signature="e#1#12#0" expanded="true" />
-                <marker date="1501572431000" expanded="true" signature="575:631" ph="select * fro... pre_credit_user_feature" />
-                <marker date="1501572431000" expanded="true" signature="575:639" ph="select * fro... pre_credit_user_feature" />
-                <marker date="1501572431000" expanded="true" signature="575:641" ph="select * fro... pre_credit_user_feature" />
+                <marker date="1501579108000" expanded="true" signature="575:631" ph="select * fro... pre_credit_user_feature" />
+                <marker date="1501579108000" expanded="true" signature="575:639" ph="select * fro... pre_credit_user_feature" />
+                <marker date="1501579108000" expanded="true" signature="575:641" ph="select * fro... pre_credit_user_feature" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="shell.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/data_process/shell.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-108">
+              <caret line="53" column="0" lean-forward="false" selection-start-line="53" selection-start-column="0" selection-end-line="53" selection-end-column="0" />
+              <folding>
+                <element signature="e#0#37#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -161,18 +175,6 @@
               <caret line="8" column="33" lean-forward="false" selection-start-line="8" selection-start-column="33" selection-end-line="8" selection-end-column="33" />
               <folding>
                 <element signature="e#0#19#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="__init__.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/data_process/__init__.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="89">
-              <caret line="7" column="0" lean-forward="false" selection-start-line="7" selection-start-column="0" selection-end-line="7" selection-end-column="0" />
-              <folding>
-                <element signature="e#0#37#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -230,16 +232,16 @@
         <option value="$PROJECT_DIR$/data_process/__init__.py" />
         <option value="$PROJECT_DIR$/train.py" />
         <option value="$PROJECT_DIR$/pyFM/fastfm.py" />
-        <option value="$PROJECT_DIR$/data_process/python.py" />
-        <option value="$PROJECT_DIR$/data_process/shell.py" />
         <option value="$PROJECT_DIR$/embedding.py" />
         <option value="$PROJECT_DIR$/conf.py" />
         <option value="$PROJECT_DIR$/prd.py" />
         <option value="$PROJECT_DIR$/data_process/transform.py" />
-        <option value="$PROJECT_DIR$/data_process/mysql.py" />
         <option value="$PROJECT_DIR$/data_process/util.py" />
         <option value="$PROJECT_DIR$/data_process/spark.py" />
         <option value="$PROJECT_DIR$/data_process/transformer.py" />
+        <option value="$PROJECT_DIR$/data_process/python.py" />
+        <option value="$PROJECT_DIR$/data_process/shell.py" />
+        <option value="$PROJECT_DIR$/data_process/mysql.py" />
         <option value="$PROJECT_DIR$/data_process/feature_transform.py" />
       </list>
     </option>
@@ -731,7 +733,7 @@
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.22054794" sideWeight="0.49676898" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32876712" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.07945205" sideWeight="0.4927302" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32328767" sideWeight="0.49353796" order="9" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.16164383" sideWeight="0.49353796" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.19709209" sideWeight="0.49452055" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32956383" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32876712" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -1038,16 +1040,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/data_process/shell.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="312">
-          <caret line="64" column="16" lean-forward="false" selection-start-line="64" selection-start-column="16" selection-end-line="64" selection-end-column="16" />
-          <folding>
-            <element signature="e#0#37#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/spark/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -1061,16 +1053,6 @@
         <state relative-caret-position="20">
           <caret line="21" column="23" lean-forward="false" selection-start-line="21" selection-start-column="23" selection-end-line="21" selection-end-column="23" />
           <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/embedding.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2222">
-          <caret line="101" column="0" lean-forward="false" selection-start-line="101" selection-start-column="0" selection-end-line="101" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#30#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1088,31 +1070,6 @@
           <caret line="7" column="0" lean-forward="false" selection-start-line="7" selection-start-column="0" selection-end-line="7" selection-end-column="0" />
           <folding>
             <element signature="e#0#37#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/data_process/python.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="377">
-          <caret line="91" column="0" lean-forward="false" selection-start-line="91" selection-start-column="0" selection-end-line="91" selection-end-column="0" />
-          <folding>
-            <element signature="e#60#75#0" expanded="true" />
-            <element signature="e#1387#1610#1" expanded="false" />
-            <element signature="e#1905#1971#0" expanded="false" />
-            <element signature="e#3022#3057#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/data_process/mysql.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="352">
-          <caret line="16" column="6" lean-forward="false" selection-start-line="16" selection-start-column="6" selection-end-line="16" selection-end-column="6" />
-          <folding>
-            <element signature="e#24#43#0" expanded="true" />
-            <marker date="1501571406000" expanded="true" signature="229:262" ph="select col_n... itf_datadic_dtl_d" />
-            <marker date="1501571406000" expanded="true" signature="229:319" ph="select field... featuremetadata" />
           </folding>
         </state>
       </provider>
@@ -1167,15 +1124,60 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/embedding.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="511">
+          <caret line="101" column="0" lean-forward="false" selection-start-line="101" selection-start-column="0" selection-end-line="101" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#30#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/data_process/python.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="193">
+          <caret line="32" column="50" lean-forward="false" selection-start-line="32" selection-start-column="7" selection-end-line="32" selection-end-column="50" />
+          <folding>
+            <element signature="e#60#75#0" expanded="true" />
+            <element signature="e#1387#1610#1" expanded="false" />
+            <element signature="e#1905#1971#0" expanded="false" />
+            <element signature="e#3022#3057#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/data_process/shell.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-108">
+          <caret line="53" column="0" lean-forward="false" selection-start-line="53" selection-start-column="0" selection-end-line="53" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#37#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/data_process/mysql.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="257">
+          <caret line="15" column="115" lean-forward="false" selection-start-line="15" selection-start-column="115" selection-end-line="15" selection-end-column="115" />
+          <folding>
+            <element signature="e#24#43#0" expanded="true" />
+            <marker date="1501579108000" expanded="true" signature="229:262" ph="select col_n... itf_datadic_dtl_d" />
+            <marker date="1501579108000" expanded="true" signature="229:337" ph="select field... featuremetadata" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/data_process/feature_transform.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="62">
-          <caret line="52" column="0" lean-forward="false" selection-start-line="52" selection-start-column="0" selection-end-line="52" selection-end-column="0" />
+        <state relative-caret-position="659">
+          <caret line="68" column="31" lean-forward="false" selection-start-line="68" selection-start-column="31" selection-end-line="68" selection-end-column="31" />
           <folding>
             <element signature="e#1#12#0" expanded="true" />
-            <marker date="1501572431000" expanded="true" signature="575:631" ph="select * fro... pre_credit_user_feature" />
-            <marker date="1501572431000" expanded="true" signature="575:639" ph="select * fro... pre_credit_user_feature" />
-            <marker date="1501572431000" expanded="true" signature="575:641" ph="select * fro... pre_credit_user_feature" />
+            <marker date="1501579108000" expanded="true" signature="575:631" ph="select * fro... pre_credit_user_feature" />
+            <marker date="1501579108000" expanded="true" signature="575:639" ph="select * fro... pre_credit_user_feature" />
+            <marker date="1501579108000" expanded="true" signature="575:641" ph="select * fro... pre_credit_user_feature" />
           </folding>
         </state>
       </provider>
