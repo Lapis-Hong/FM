@@ -1,14 +1,15 @@
 from __future__ import print_function
-import pyFM
-from prepareData.fm_index import *
 
-label, _ = feature_target_split(os.path.join(DATA_DIR, TEST))
+from pyFM import libfm
+from conf import *
+from data_process.util import get_target
+from data_process import clock, keyword_only
 
 
-@clock("Take {:.4f} sec  ")
+@clock("FM training is finished.")
 def train(method='mcmc', dim_k=8, learn_rate=0.01,
           regularization=0.01, init_std=0.1, iter_num=100, silent=True):
-    fm = pyFM.FM(
+    fm = libfm.FM(
         task='classification',
         learning_method=method,
         num_iter=iter_num,
@@ -16,7 +17,8 @@ def train(method='mcmc', dim_k=8, learn_rate=0.01,
         learn_rate=learn_rate,
         r2_regularization=regularization,
         init_stdev=init_std,
-        silent=silent)
+        silent=silent,
+        model_path=MODEL_DIR)
     model = fm.run(train_set=TRAIN_PATH, test_set=TEST_PATH)
     return model
 
@@ -24,18 +26,14 @@ def train(method='mcmc', dim_k=8, learn_rate=0.01,
 def metrics(model_name):
     from sklearn.metrics import roc_auc_score, log_loss
     y_pred = model_name.predictions
-    y_true = label
+    y_true = get_target(TEST_PATH)
     auc = roc_auc_score(y_true, y_pred)
     logloss = log_loss(y_true, y_pred)
-    print("auc:{:.6f} logloss:{:.6f}".format(auc, logloss))
+    print("auc:{0:.6f} logloss:{1:.6f}".format(auc, logloss))
     return auc
 
 
-print('the default parameter model', end='')
-model_default = train(silent=False)
-metrics(model_default)
-
-
+@keyword_only
 def grid_search(method, iter_num, dim_k, learn_rate=(0.01,), regularization=0.01, init_std=0.05):
     """
     grid search for tuning the parameter 
@@ -53,9 +51,9 @@ def grid_search(method, iter_num, dim_k, learn_rate=(0.01,), regularization=0.01
     assert type(dim_k) == list
     assert type(learn_rate) == list
     para_group = ((i, j, l) for i in dim_k for j in learn_rate for l in iter_num)  # generator
-    print('\nThe training method is {}'.format(method.upper()))
+    print('\nThe training method is {0}'.format(method.upper()))
     for i, j, l in para_group:
-        para = 'dim k:{} learning rate:{} iter:{} '.format(i, j, l)
+        para = 'dim k:{0} learning rate:{1} iter:{2} '.format(i, j, l)
         print(para, end=' ')
         model = train(method=method, dim_k=i, learn_rate=j,
                       regularization=regularization, init_std=init_std, iter_num=l)
@@ -64,8 +62,13 @@ def grid_search(method, iter_num, dim_k, learn_rate=(0.01,), regularization=0.01
             auc_best = auc
             para_best = para
             model_best = model
-    print('\nThe best parameter combination is:\n{} reach AUC {:.5}'.format(para_best, auc_best))
+    print('\nThe best parameter combination is:\n{0} reach AUC {0:.5}'.format(para_best, auc_best))
     return model_best
 
-
-model_best = grid_search('mcmc', iter_num=range(100, 500, 100), dim_k=range(2, 10, 2), learn_rate=[0.01])
+if __name__ == '__main__':
+    print('The default parameter model', end='')
+    model_default = train(silent=False)
+    metrics(model_default)
+    # index_mapping = pickle.load(open('dump', 'rb'))
+    # print(index_mapping)
+    # model_best = grid_search('mcmc', iter_num=range(100, 500, 100), dim_k=range(2, 10, 2), learn_rate=[0.01])

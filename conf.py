@@ -1,26 +1,33 @@
 import os
-import shutil
+try:
+    import cPickle as pickle
+except:
+    import pickle
 
 # original file path
-LIBSVM_TRAIN_FILE = ['fmtrain20170403.txt']  # train data first column is target
-LIBSVM_PRD_FILE = ['fm20170403.txt']  # prd data first column is order_id
+HDFS_PATH = ''
+ORIGIN_TRAIN = 'fmtrain20170403.libsvm'  # train data first column is target
+ORIGIN_PRD = 'fm20170403.libsvm'  # prd data first column is order_id
+SPARK_FILE = 'fmtrain_spark'
+SPARK_FILE2 = 'fromhive'
 
 # user define filename
-LIBFM_TRAIN = 'fmtrain20170403.libfm'
-                   # '/home/apps/jarfile/lxt/libfm/trainAndpredict/prepareData/fmtrain20170403.libsvm',
-                   # '/home/apps/jarfile/lxt/libfm/trainAndpredict/prepareData/fmtrain20170404.libsvm',
-                   # '/home/apps/jarfile/lxt/libfm/trainAndpredict/prepareData/fmtrain20170404.libsvm'
-TRAIN = 'train'  # libFM train data filename
+FM_TRAIN = 'fmtrain20170403.libfm'
+TRAIN = 'train'
 TEST = 'test'
-LIBFM_PRD = 'fm20170403.libfm'
-LATENT = 'latent'  # latent vector filename
-EMBEDDING = 'embeddingData'  # prd data with embedding vector filename
+FM_PRD = 'fm20170403.libfm'
+EMBEDDING = 'embedding_data'  # prd data with embedding vector filename
 
 DATA_DIR = 'data'
-OUTPUT_DIR = 'output'
+MODEL_DIR = 'model'
+
+TABLE_NAME = 'temp_jrd.pre_credit_user_fm_embedding'
+ORIGIN_TABLE = 'temp_jrd.pre_credit_user_feature_transformed_lr'
+LATENT_TABLE = 'temp_jrd.pre_credit_user_fm_latent'
+DT = '20170801'
 
 
-def _gen_path(directory, filename):
+def gen_path(directory, filename):
     return os.path.join(directory, filename)
 
 
@@ -29,17 +36,16 @@ def _make_path(dirname):
     if os.path.exists(dirname):
         pass
         #shutil.rmtree(dirname)
-    else: os.mkdir(dirname)
+    else:
+        os.mkdir(dirname)
 
-# MODEL_PATH = 'model'  # save the FM original model result
-TRAIN_PATH = _gen_path(DATA_DIR, TRAIN)
-TEST_PATH = _gen_path(DATA_DIR, TEST)
-PRD_PATH = _gen_path(DATA_DIR, LIBFM_PRD)
-LATENT_PATH = _gen_path(OUTPUT_DIR, LATENT)
-EMBEDDING_PATH = _gen_path(OUTPUT_DIR, EMBEDDING)
 
-_make_path(DATA_DIR)
-_make_path(OUTPUT_DIR)
-#_make_path(MODEL_PATH)
+TRAIN_PATH = gen_path(DATA_DIR, TRAIN)
+TEST_PATH = gen_path(DATA_DIR, TEST)
+PRD_PATH = gen_path(DATA_DIR, FM_PRD)
+EMBEDDING_PATH = gen_path(MODEL_DIR, EMBEDDING)
 
-TABLE_NAME = 'temp_jrd.pre_credit_user_feature_fm_embedding'
+if __name__ == '__main__':
+    _make_path(DATA_DIR)
+    _make_path(MODEL_DIR)
+
