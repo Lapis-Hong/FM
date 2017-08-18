@@ -44,15 +44,26 @@ def get_target(infile):
 
 
 @clock('Train test split completed!')
-def split_data(libfm_file, train_file, test_file, train_ratio=0.8):
+def split_data(libfm_file, train_file, test_file, train_ratio=0.8, mode='error'):
     """
     make train and test file for libFM train, shuffle the data
     :param libfm_file: FM_TRAIN_file
     :param train_file: libFM train data path
     :param test_file: libFM test data path
     :param train_ratio:
+    :param mode: 
     :return: the libFM train and test data path
     """
+    if os.path.exists(train_file):
+        if mode == 'error':
+            raise IOError('{} is already exsits. Please change it in conf.py'.format(train_file))
+        elif mode == 'overwrite':
+            os.remove(train_file)
+            os.remove(test_file)
+        elif mode == 'append':
+            pass
+        else:
+            raise TypeError('No such mode')
     train_length, test_length = 0, 0
     for df in pd.read_csv(os.path.join(DATA_DIR, libfm_file), header=None, chunksize=200000):
         # n, m = df.shape

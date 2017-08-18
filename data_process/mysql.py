@@ -16,6 +16,6 @@ dbconn = pymysql.connect(
 sql = "select fieldname, transform from featuremetadata where modelname='pre_credict_user_fm_new' and indexnum<=564"
 config = pd.read_sql(sql, dbconn)
 trans_dic = {config.fieldname[i]: config.transform[i] for i in range(len(config))}
-print(trans_dic)
+# print(trans_dic)
 
 

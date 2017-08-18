@@ -7,6 +7,7 @@ from pyspark.sql import SparkSession
 from pyspark.ml.linalg import Vectors, VectorUDT
 from pyspark.mllib.linalg import Vectors, VectorUDT
 from pyspark.sql.types import Row
+from spark import start_spark
 
 # vectorize = udf(lambda vs: Vectors.dense(vs), VectorUDT())
 # assembler = VectorAssembler(
@@ -20,19 +21,20 @@ from pyspark.sql.types import Row
 # 'fmtrain20170704'
 
 
-def pandas_to_spark(file):
-    df = pd.read_csv(file)  # null is NaN in pandas
+def pandas_to_spark(file_name):
+    _, ss = start_spark()
+    df = pd.read_csv(file_name)  # null is NaN in pandas
     if df.isnull().any().sum() > 0:
         category_cols = df.columns[df.dtypes == object]  # object is mix type
         if len(category_cols) > 0:
             df.fillna('0', inplace=True)
             numerical_cols = df.columns[df.dtypes != object]
             df = df[numerical_cols].astype(float)  # change the string '0' to float 0.0
-            spark_df = spark.createDataFrame(df)
+            spark_df = ss.createDataFrame(df)
         else:
-            spark_df = spark.createDataFrame(df)
+            spark_df = ss.createDataFrame(df)
     else:
-        spark_df = spark.createDataFrame(df)
+        spark_df = ss.createDataFrame(df)
     return spark_df
 # df = spark.read.format("csv").options(header="true").load("fmtrain20170704")
 # df.dropna(axis=1, how='all')
@@ -40,18 +42,18 @@ def pandas_to_spark(file):
 # pandas_df.info()
 
 
-def multitransform(func):
+def multitransform(func):  # need modify
     @wraps(func)
-    def multitransformer(dataframe, inputCols, outputCols, **kwargs):
-        if isinstance(inputCols, str):
-            inputCols = [inputCols]
-            outputCols = [outputCols]
-        if len(inputCols) != len(outputCols):
+    def multitransformer(dataframe, input_cols, output_cols, **kwargs):  # inputCols can not be keyword args
+        if isinstance(input_cols, str):
+            df = func(dataframe, inputCol=input_cols, outputCol=output_cols, **kwargs)
+            return df
+        elif len(input_cols) != len(output_cols):
             raise TypeError('inputCols and outputCols should be the same dimension')
-        for inputCol, outputCol in zip(inputCols, outputCols):
-            df = func(dataframe, inputCol=inputCol, outputCol=outputCol, **kwargs)
-            dataframe = df
-        return df
+            for inputCol, outputCol in zip(inputCols, outputCols):
+                df = func(dataframe, inputCol=inputCol, outputCol=outputCol, **kwargs)
+                dataframe = df
+            return df
     return multitransformer
 
 
@@ -132,10 +134,15 @@ def bucktizer(dataFrame, inputCol, outputCol, splits, handleInvalid='error', dro
     return df
 
 
-@multitransform
-def vector_assembler(dataFrame, inputCols, outputCol):
+def vector_assembler(dataFrame, inputCols, outputCol, drop=False):
     assembler = VectorAssembler(inputCols=inputCols, outputCol=outputCol)
     df = assembler.transform(dataFrame)
+    if drop:
+        if isinstance(inputCols, basestring):
+            df = df.drop(inputCols)
+        else:
+            for col in inputCols:
+                df = df.drop(col)
     return df
 
 

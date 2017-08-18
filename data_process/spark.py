@@ -18,7 +18,7 @@ def start_spark():
     conf = SparkConf().setAppName("testSpark").setMaster('yarn').set('spark.executor.memory', '10g')
     sc = SparkContext(conf=conf)
     ss = SparkSession.builder.config(conf=conf).enableHiveSupport().getOrCreate()
-    print('SparkContext and HiveContext is ready')
+    print('********************** SparkContext and HiveContext is ready ************************')
     return sc, ss
 
 
