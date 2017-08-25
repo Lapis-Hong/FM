@@ -1,8 +1,12 @@
+"""Using Spark to do the data preprocess
+TODO: need to test the performance and debug"""
+import shutil
+import os
 try:
     import cPickle as pickle
-except:
+except ImportError:
     import pickle
-import shutil
+
 import numpy as np
 import pandas as pd
 from sklearn.datasets import dump_svmlight_file
@@ -10,34 +14,26 @@ from pyspark import *
 from pyspark.sql import SparkSession, Row
 
 from conf import *
-from data_process import clock, keyword_only
+from data_process import clock
 from data_process.python import reformat
 
 
-def start_spark():
-    conf = SparkConf().setAppName("testSpark").setMaster('yarn').set('spark.executor.memory', '10g')
-    sc = SparkContext(conf=conf)
-    ss = SparkSession.builder.config(conf=conf).enableHiveSupport().getOrCreate()
-    print('********************** SparkContext and HiveContext is ready ************************')
-    return sc, ss
-
-
 @clock('Successfully convert to the libfm format!')
-def convert_from_local_byspark(infile, outfile, isprd=False, reindex=True, keep_zero=False):
+def convert_from_local_byspark(infile, outfile, isprd=False, reindex=False, keep_zero=False):
     """use spark to convert the local libsvm data to libfm"""
-    if reindex:
-        index_mapping = pickle.load(open('dump', 'rb'))
-        print('index mapping has dumped')
+    index_mapping = pickle.load(open('dump', 'rb')) if reindex else None
+    print('index mapping has loaded')
     conf = SparkConf()#.setMaster('yarn')
     sc = SparkContext(conf=conf)
     rdd = sc.textFile(infile)
     data = rdd.map(reformat(isprd, reindex, keep_zero, index_mapping))  # passing params func to map()
-    if os.path.exists(SPARK_FILE):
-        shutil.rmtree(SPARK_FILE)
+    if os.path.exists(os.path.join(DATA_DIR, SPARK_FILE)):
+        shutil.rmtree(os.path.join(DATA_DIR, SPARK_FILE))
     data.repartition(1).saveAsTextFile(outfile)
     sc.stop()
 
 
+"""TODO: unfinished, need to debug"""
 @clock('Successfully convert to the libfm format!')
 def convert_from_hive_byspark(table, dt,  outfile, save_origin=False, origin_file=None):
     conf = SparkConf().setAppName("testSpark").setMaster('yarn').set('spark.executor.memory', '10g')
@@ -56,6 +52,5 @@ def convert_from_hive_byspark(table, dt,  outfile, save_origin=False, origin_fil
 
 
 if __name__ == '__main__':
-    print('index mapping has dumped')
     convert_from_local_byspark(ORIGIN_TRAIN, SPARK_FILE)
-    #convert_fromHive_bySpark(ORIGIN_TABLE, 20170720, SPARK_FILE2)
+    #convert_from_hive_bySpark(ORIGIN_TABLE, 20170720, SPARK_FILE2)

@@ -1,3 +1,4 @@
+"""Wraps the libFM package with python"""
 import subprocess
 import os
 import sys

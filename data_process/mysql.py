@@ -1,3 +1,4 @@
+"""Read the transform configuration from the database featureengine: featuremetadata"""
 # -*- coding: utf-8 -*-
 import pandas as pd
 import pymysql

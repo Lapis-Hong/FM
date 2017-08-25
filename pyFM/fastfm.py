@@ -1,3 +1,5 @@
+"""Contains the fastFM packages
+TODO: need to compare with the libFM and provide the interface"""
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, roc_auc_score

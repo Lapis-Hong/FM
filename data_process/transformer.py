@@ -1,24 +1,16 @@
+"""
+Wrap the Spark feature transformers to use for our feature transformation
+"""
 import pandas as pd
 from functools import wraps
 from pyspark import *
 from pyspark.ml.feature import *
-from pyspark.sql import SparkSession
-#from pyspark.ml import
-from pyspark.ml.linalg import Vectors, VectorUDT
-from pyspark.mllib.linalg import Vectors, VectorUDT
-from pyspark.sql.types import Row
-from spark import start_spark
+from data_process.util import start_spark
 
 # vectorize = udf(lambda vs: Vectors.dense(vs), VectorUDT())
 # assembler = VectorAssembler(
 #     inputCols=["features[{0}]".format(i) for i in range(n)],
 #     outputCol="features_vector")
-
-#conf = SparkConf().setAppName("testSpark")
-#sc = SparkContext(conf=conf)
-#spark = SparkSession.builder.config(conf=conf).enableHiveSupport().getOrCreate()
-# spark.conf.set("spark.executor.memory", "2g")
-# 'fmtrain20170704'
 
 
 def pandas_to_spark(file_name):
@@ -213,5 +205,5 @@ def chisq_selector(dataFrame, numTopFeatures, featuresCol, outputCol, labelCol):
 # estimator = pipeline.fit(spark_df)
 # transformer = estimator.transform(spark_df)
 # transformer.show()
-#
+
 

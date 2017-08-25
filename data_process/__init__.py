@@ -2,10 +2,7 @@
 from __future__ import print_function
 import time
 from functools import wraps
-try:
-    import cPickle as pickle
-except:
-    import pickle
+
 
 __all__ = ['clock', 'keyword_only']
 

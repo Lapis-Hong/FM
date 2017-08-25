@@ -1,3 +1,6 @@
+"""Read original data from hive, do the feature transform directly using Spark
+TODO: need to improve the performance and test for multiple days data
+"""
 import datetime
 import time
 import os
@@ -14,8 +17,8 @@ from pyspark.sql.types import Row
 
 from mysql import trans_dic
 from transformer import *
-from spark import start_spark
 from data_process import clock
+from data_process.util import start_spark
 from shell import load_data_from_hdfs
 
 # test_dic = {'age': 'discretize(20)', 'sex': 'onehot', 'wait_pay': 'bucket(min,10,100,max);onehot()'}
@@ -98,9 +101,6 @@ def write_to_hdfs(data, path=os.path.join(tempfile.mkdtemp(), 'data')):
 
 
 if __name__ == '__main__':
-    # conf = SparkConf().setAppName("testSpark").setMaster('yarn').set("spark.executor.memory", "10g")
-    # sc = SparkContext(conf=conf)
-    # spark = SparkSession.builder.config(conf=conf).enableHiveSupport().getOrCreate()
     path = 'pre_credit_user_fm'
     begin = datetime.date(2017, 4, 21)
     end = datetime.date(2017, 7, 20)
