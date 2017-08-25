@@ -1,42 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="04673d38-61e8-4d27-a15d-8fc54176a80a" name="Default" comment="update">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/11.csv" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/fmtrain20170403.libsvm" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/prd.py" afterPath="" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/metastore_db/db.lck" afterPath="$PROJECT_DIR$/metastore_db/db.lck" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/metastore_db/log/log.ctrl" afterPath="$PROJECT_DIR$/metastore_db/log/log.ctrl" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/metastore_db/log/log1.dat" afterPath="$PROJECT_DIR$/metastore_db/log/log1.dat" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/metastore_db/log/logmirror.ctrl" afterPath="$PROJECT_DIR$/metastore_db/log/logmirror.ctrl" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/metastore_db/seg0/c150.dat" afterPath="$PROJECT_DIR$/metastore_db/seg0/c150.dat" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/metastore_db/seg0/c161.dat" afterPath="$PROJECT_DIR$/metastore_db/seg0/c161.dat" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/metastore_db/seg0/c171.dat" afterPath="$PROJECT_DIR$/metastore_db/seg0/c171.dat" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/metastore_db/seg0/c180.dat" afterPath="$PROJECT_DIR$/metastore_db/seg0/c180.dat" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/metastore_db/seg0/c191.dat" afterPath="$PROJECT_DIR$/metastore_db/seg0/c191.dat" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/metastore_db/seg0/c1a1.dat" afterPath="$PROJECT_DIR$/metastore_db/seg0/c1a1.dat" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/metastore_db/seg0/c1b1.dat" afterPath="$PROJECT_DIR$/metastore_db/seg0/c1b1.dat" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/metastore_db/seg0/c230.dat" afterPath="$PROJECT_DIR$/metastore_db/seg0/c230.dat" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/metastore_db/seg0/c90.dat" afterPath="$PROJECT_DIR$/metastore_db/seg0/c90.dat" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/metastore_db/seg0/ca1.dat" afterPath="$PROJECT_DIR$/metastore_db/seg0/ca1.dat" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/metastore_db/seg0/cb1.dat" afterPath="$PROJECT_DIR$/metastore_db/seg0/cb1.dat" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/conf.py" afterPath="$PROJECT_DIR$/conf.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data_process/__init__.py" afterPath="$PROJECT_DIR$/data_process/__init__.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data_process/feature_transform.py" afterPath="$PROJECT_DIR$/data_process/feature_transform.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data_process/mysql.py" afterPath="$PROJECT_DIR$/data_process/mysql.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data_process/python.py" afterPath="$PROJECT_DIR$/data_process/python.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data_process/shell.py" afterPath="$PROJECT_DIR$/data_process/shell.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data_process/spark.py" afterPath="$PROJECT_DIR$/data_process/spark.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data_process/transformer.py" afterPath="$PROJECT_DIR$/data_process/transformer.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/data_process/util.py" afterPath="$PROJECT_DIR$/data_process/util.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/derby.log" afterPath="$PROJECT_DIR$/derby.log" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/embedding.py" afterPath="$PROJECT_DIR$/embedding.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/main.py" afterPath="$PROJECT_DIR$/main.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/pyFM/fastfm.py" afterPath="$PROJECT_DIR$/pyFM/fastfm.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/pyFM/libfm.py" afterPath="$PROJECT_DIR$/pyFM/libfm.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/train.py" afterPath="$PROJECT_DIR$/train.py" />
-    </list>
+    <list default="true" id="04673d38-61e8-4d27-a15d-8fc54176a80a" name="Default" comment="update" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -763,7 +728,14 @@
       <option name="project" value="LOCAL" />
       <updated>1501572977365</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="update">
+      <created>1503645494308</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1503645494308</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TestHistory">
