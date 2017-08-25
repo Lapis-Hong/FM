@@ -113,7 +113,7 @@ def start_spark(master='yarn'):
 
 if __name__ == '__main__':
     index_dic = get_new_index(ORIGIN_TRAIN)
-    pickle.dump(index_dic, open('index_dump', 'wb'))
+    pickle.dump(index_dic, open(os.path.join(MODEL_DIR, 'index_dump'), 'wb'))
     _make_path(DATA_DIR)
     _make_path(MODEL_DIR)
 
