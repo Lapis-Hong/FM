@@ -2,10 +2,14 @@
 from __future__ import print_function
 import time
 from functools import wraps
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 
 
-__all__ = ['clock', 'keyword_only']
-
+# if __all__ then the above import statement can't be import from other module by from data_process import *
+# __all__ = ['clock', 'keyword_only']
 
 # parametric decorator
 def clock(info=''):  # generator a decorator
@@ -15,7 +19,7 @@ def clock(info=''):  # generator a decorator
             t0 = time.time()
             result = func(*args, **kwargs)
             elapsed = time.time() - t0
-            print(info + '  Call ' + func.__name__ + '()' + ' Take {0} sec.'.format(elapsed))
+            print(info + '  Call ' + func.__name__ + '()' + ' Take {0} sec.\n'.format(elapsed))
             # in python 2.6, format need to specify the location like {0}, {1}
             return result  # important
         return wrapper

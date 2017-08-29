@@ -1,7 +1,7 @@
-"""Read original data from hive, do the feature transform directly using Spark
+"""Read original data (before feature transform) from hive, do the feature transform directly using Spark
+
 TODO: need to improve the performance and test for multiple days data
 """
-import datetime
 import time
 import os
 import tempfile
@@ -15,6 +15,7 @@ from pyspark.ml.linalg import Vectors, VectorUDT
 from pyspark.mllib.linalg import Vectors, VectorUDT
 from pyspark.sql.types import Row
 
+from conf import *
 from mysql import trans_dic
 from transformer import *
 from data_process import clock
@@ -24,9 +25,9 @@ from shell import load_data_from_hdfs
 # test_dic = {'age': 'discretize(20)', 'sex': 'onehot', 'wait_pay': 'bucket(min,10,100,max);onehot()'}
 
 
-def read_from_hive(table, dt):
+def read_from_hive(table, from_dt, to_dt):
     _, ss = start_spark()
-    df = ss.sql('select * from {0} where dt={1}'.format(table, dt))
+    df = ss.sql('select * from {0} where dt between {1} and {2}'.format(table, from_dt, to_dt))
     print('Successfully read the data from hive, {0} rows, {1} cols'.format(df.count(), len(df.columns)))
     return df
 
@@ -58,20 +59,21 @@ def parse_transform(transform_dict):
                 elif transform.startswith('Untransform'):
                     pass
                 else:
-                    raise Exception('transform {} of field {} is not found, please check the transform'.format(transform, field_name))
+                    raise Exception('transform {0} of field {1} is not found, please check the transform'.format(transform, field_name))
     c = Counter(elem[0] for elem in transform_list)
     print(c)
-    print('There are {} features need to transform'.format(len(transform_list)))
+    print('There are total {0} transformers need to be transform'.format(len(transform_list)))
     return transform_list
 
 
 @clock()
 def transform_pipeline(data, transform):
-    data_type = dict(data.dtypes)
-    data_frame = data.fillna(0)  # alias for df.na.fill()
+    # data_type = dict(data.dtypes)
+    data_frame = data
     for index, item in enumerate(transform):
-        if data_type[item[1]] == 'string':
-            data_frame = data_frame.withColumn(item[1], data_frame[item[1]].astype('double'))  # change the column type
+        #if data_type[item[1]] == 'string':
+        data_frame = data_frame.withColumn(item[1], data_frame[item[1]].astype('double'))  # change the column type
+        data_frame = data_frame.fillna(0)  # alias for df.na.fill()
         t0 = time.time()
         if item[0] == 'bucketizer':
             df = bucktizer(data_frame, item[1], 'temp', splits=item[2], drop=True)
@@ -101,21 +103,21 @@ def write_to_hdfs(data, path=os.path.join(tempfile.mkdtemp(), 'data')):
 
 
 if __name__ == '__main__':
-    path = 'pre_credit_user_fm'
-    begin = datetime.date(2017, 4, 21)
-    end = datetime.date(2017, 7, 20)
-    for i in range((end-begin).days+1):
-        day = begin + datetime.timedelta(days=i)
-        dt = day.strftime("%Y%m%d")
-        dataset = read_from_hive('temp_jrd.pre_credit_user_feature', dt)
-        # print(dataset.take(1))
-        transformers = parse_transform(trans_dic)
-        # print(transformers)
-        data_transformed = transform_pipeline(dataset, transformers)
-        print(data_transformed.first())
-        # hdfs_path = write_to_hdfs(data_transformed, 'pre_credit_user_fm')
-        data_transformed.write.mode('append').parquet(path)
-        print('{0} feature transform has finished'.format(dt))
+    path = 'hdfs://bipcluster/user/u_jrd_lv1/fm_data'
+    # begin = datetime.date(2017, 4, 21)
+    # end = datetime.date(2017, 7, 20)
+    # for i in range((end-begin).days+1):
+    #     day = begin + datetime.timedelta(days=i)
+    #     dt = day.strftime("%Y%m%d")
+    dataset = read_from_hive(ORIGIN_TABLE, from_dt=FROM_DT, to_dt=TO_DT)
+    # print(dataset.take(1))
+    transformers = parse_transform(trans_dic)
+    # print(transformers)
+    data_transformed = transform_pipeline(dataset, transformers)
+    print(data_transformed.first())
+    # hdfs_path = write_to_hdfs(data_transformed, 'pre_credit_user_fm')
+    data_transformed.write.mode('append').parquet(path)
+    # print('{0} feature transform has finished'.format(dt))
 
     load_data_from_hdfs(path, 'spark df')
 

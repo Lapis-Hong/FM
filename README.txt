@@ -1,69 +1,81 @@
 ****************************************************************************************
-安装libFM
-1.程序包在集群master上，路径：/home/apps/jarfile/lxt/libfm
-2.make all
-3.设置环境变量：export LIBFM_PATH=/home/apps/jarfile/lxt/libfm/bin/
+所需环境
+1. C++library:
+安装libFM，libFFM, 并设置环境变量LIBFM_PATH, LIBFFM_PATH
+2. Python 环境:
+python 2.6及以上, embedding过程需要python 2.6, 已搭建虚拟环境 py2.6, source activate py2.6 进入, source deactivate 退出
+所需python库: numpy，scipy，pandas，sklearn，pyspark, fastFM（安装失败）
 
-python wrapper for libFM
-路径：pywFM/__init__.py
+参考
+libFM: http://www.libfm.org
+fastFM: http://ibayer.github.io/fastFM/#
+libffm: http://www.csie.ntu.edu.tw/~cjlin/libffm
 
 ****************************************************************************************
-factorization machine embedding:
-注：以testfeatureengine.featuremetadata where modelname = 'wphorder_used_fm'为例；
-	每一个fieldname表示一个field。对该field进行onehot，获得多个feature
-	indexnum特指featuremetadata中的indexnum
-	隐向量维数用k_dim表示
+FM embedding
+
+流程
+HIVE > HDFS > 本地目录训练 > 写入HIVE or HDFS
 
 一.数据准备
-1.特征工程进行transform，生成经过onehot的train数据与prd数据
+1.特征变换配置:
+  观察所有特征的分布情况
+  目前对适合离散化的连续变量配bucket和discretize的离散化处理
+  绝大部分为0的连续变量离散化后的特征数极少, 因此直接配standardnormalize
+  多类别变量配onehot
+  flag型变量配untransform
+  tips: FM 适合类别数较多的category feature, onehot后足够稀疏, embedding效果可能更优
 
-2.记录每一个field经过onehot生成feature的indexnum
-	例：indexnum=89的field是‘vmark_total’
-		经过onehot之后生成feature对应的indexnum范围是499~518；
-		indexnum=90的field是‘vmark_next_upgrade’
-		经过onehot之后生成feature对应的indexnum范围是519~535；
-		indexnum=90的field是‘point_available’
-		经过onehot之后生成feature对应的indexnum范围是536~555；
+2.原始数据:
+  特征工程进行transform后生成libsvm格式的train数据与prd数据。
+  注意每一行的feature数量要相同，在featuremetadata配置特征变换时将defaultvalue设置为0即可
+  经过onehot变换的数据会embedding, 生成的索引会在原始feature index之后,
+  若不希望embedding的feature配其他特征变换即可。
+
+3.数据预处理: 只针对train数据
+  target由{1, 0}转化为{1, -1}
+  去除index:value中value值为0的数据, 减少数据量, 加快训练速度
+  获得索引映射关系字典 原始libsvm中索引映射成从0开始的索引, 原始index:新index, 如{'56':'0', '57':'1'...}, 为了之后embedding的需要
+  划分libfm的训练测试集
+
+  提供了三种方式: shell, python, spark 性能spark >> shell > python  此处spark仍为单机多线程模式
+  性能测试: 8G 原始数据预处理耗时分别为 spark(130s) shell(700s) python(780s)
 		
-3.特征工程生成的libsvm数据，feature的序号重新排序
-	特诊工程生成的libsvm数据，feature的序号是用表featuremetadata的indexnum。因此做onehot之后feature的序号不连续。
-	所以对libsvm数据中的feature序号从0进行重新排序，相应的要记录生成feature对应的新范围。
-	例：
-		libsvm生成的train数据：1.0 499:0 500:0 501:0 502:0 503:0 504:0 505:1 506:0 507:0 508:0 509:0 510:0 511:0 512:0 513:0 514:0 515:0 516:0 517:0 518:0 519:0 520:0 521:0 522:0 523:0 524:0 525:0 526:0 527:1 528:0 529:0 530:0 531:0 532:0 533:0 534:0 535:0 536:0 537:0 538:0 539:0 540:0 541:0 542:1 543:0 544:0 545:0 546:0 547:0 548:0 549:0 550:0 551:0 552:0 553:0 554:0 555:0 
-		重新排序生成的数据：   1.0 0:0   1:0   2:0   3:0   4:0   5:0   6:1   7:0   8:0   9:0   10:0  11:0  12:0  13:0  14:0  15:0  16:0  17:0  18:0  19:0  20:0  21:0  22:0  23:0  24:0  25:0  26:0  27:0  28:1  29:0  30:0  31:0  32:0  33:0  34:0  35:0  36:0  37:0  38:0  39:0  40:0  41:0  42:0  43:1  44:0  45:0  46:0  47:0  48:0  49:0  50:0  51:0  52:0  53:0  54:0  55:0  56:0  
-		indexnum=89的field是‘vmark_total’
-		经过onehot之后生成feature对应的新序号范围是0~19；
-		indexnum=90的field是‘vmark_next_upgrade’
-		经过onehot之后生成feature对应的新序号范围是20~36；
-		indexnum=90的field是‘point_available’
-		经过onehot之后生成feature对应的新序号范围是37~56；
-		
-4.libsvm数据中去除value为0的特征
-	例：
-		libFM使用的train数据：1.0 6:1 28:1 43:1
 
 二.训练
 
-使用libFM进行训练，获得每一个特征对应的隐向量
-隐向量存入文件中
+提供了三种接口: libfm, fastFM以及libffm(libfm已成熟, fastFM安装有问题, libffm数据预处理部分还没完成)
+训练时间主要与迭代次数, 学习率和隐向量维数有关, 可通过降低迭代次数, 提高学习率以及降低隐向量维数来加快训练
+
 
 三.embedding
 
-1.保留prd数据的‘order_id’与需要做embedding的feature序号
-	例：
-		1234567890 6:1 28:1 43:1
-		1234567891 6:1 43:1
+1.逻辑:
+假如类别1有5类, onehot后生成的一个样本是[0, 1, 0, 0, 0], 那么对应激活的隐向量为1所对应的index值的隐向量
+因此，对于每一个样本而言，每一个类别有且只有一个被激活，embedding的逻辑就是逢1便填入隐向量latent[index]
 
-2.prd数据中的feature与feature范围匹配。如果匹配，用feature的序号查找隐向量；如果没有匹配，用k_dim个0补充
-	例：三个field，经过onehot，生成feature对应的序号范围是(0,19),(20,36).(37,56)
-		1234567890 (隐向量) (隐向量)   (隐向量) 
-		1234567891 (隐向量) (k_dim个0) (隐向量) 
+2.提供了两种embedding方式，通过在embedding.py里函数中isappend参数设置
+  isappend=True 在原有feature基础上增加embedding产生的新feature
+  isappend=False 只写入embedding产生的新feature
 
-3.得到新特征存入hive中。order_id为主键，与其他数据进行join
+3.隐向量写入hive,
+(1)embedding数据写入hive与其他数据join供其他模型使用; 需要order_id和target字段都写入hive, 方便后续使用数据
+此时格式需dataframe格式
+(2)embedding数据直接写入HDFS, 此时需要写入两份数据, 一份train, 一份prd
+此时格式需libsvm格式
 
 ****************************************************************************************
-改进：
-1.有些field的value只有0或1，是否需要作为数据的一部分，进行FM的训练。
-2.有些field进行离散化后，只能离散出少数的feature(如一个field离散成5个feature)。如果隐向量维数大于feature的数量，是否有必要进行embedding。
-3.field进行onehot之后，生成feature对应的indexnum范围需人为记录。
-4.唯品花已开已用数据不全
+四.使用指南
+
+1.一键使用:
+  切到myFM／目录, 修改conf.py里面的配置参数 然后 $python main.py
+
+2.各模块独立使用:
+  数据预处理 $python data_process/spark.py (或者shell.py or python.py)
+  训练 $python train.py 可命令行调参 具体usage 参见 python train.py -h
+  embeeding $python embedding.py
+
+
+****************************************************************************************
+TODO:
+libffm的数据预处理: 需要field:feature:value格式

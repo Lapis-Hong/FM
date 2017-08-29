@@ -37,7 +37,8 @@ def pandas_to_spark(file_name):
 def multitransform(func):  # need modify
     @wraps(func)
     def multitransformer(dataframe, input_cols, output_cols, **kwargs):  # inputCols can not be keyword args
-        if isinstance(input_cols, str):
+        """"""
+        if isinstance(input_cols, basestring):
             df = func(dataframe, inputCol=input_cols, outputCol=output_cols, **kwargs)
             return df
         elif len(input_cols) != len(output_cols):

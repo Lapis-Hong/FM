@@ -1,25 +1,24 @@
 import sys
 import os
-import shutil
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
 
 import pandas as pd
+import numpy as np
 from pyspark import *
 from pyspark.sql import SparkSession
 
 from conf import *
 from data_process import *
 
+__all__ = ['make_path', 'split_data', 'split_data_fastfm', 'get_new_index',
+           'get_target', 'target_feature_split', 'create_table', 'start_spark']
 
-def _make_path(dirname, overwrite=False):
-    if not os.path.exists(dirname):
-        os.mkdir(dirname)
-    elif overwrite:
-        shutil.rmtree(dirname)  # if exists dir, remove it, os.rmdir can only remove empty dir
-        os.mkdir(dirname)
+
+def make_path(*args):
+    """make multiple path"""
+    for dirname in args:
+        if not os.path.exists(dirname):
+            os.mkdir(dirname)
+            print('Already make directory: {0}'.format(dirname))
 
 
 @clock('Index mapping is finished!')
@@ -44,7 +43,10 @@ def get_new_index(infile, eachline=False):
         if sys.version < '2.7':
             dic = dict([(k, v) for v, k in enumerate(index_list)])
         else:
-            dic = {k: v for v, k in enumerate(index_list)}  # mapping the index to new index
+            try:
+                dic = {k: v for v, k in enumerate(index_list)}  # mapping the index to new index
+            except SyntaxError:
+                pass
         return dic
 
 
@@ -54,7 +56,7 @@ def get_target(infile):
 
 
 @clock('Train test split has completed!')
-def split_data(infile, train_file, test_file, train_ratio=0.8, chunksize=200000, mode='error'):
+def split_data(infile, train_file, test_file, train_ratio=TRAIN_RATIO, chunksize=200000, mode='error'):
     """
     make train and test file for libFM train, shuffle the data
     :param infile: FM TRAIN FILE
@@ -68,7 +70,7 @@ def split_data(infile, train_file, test_file, train_ratio=0.8, chunksize=200000,
     test_path = os.path.join(DATA_DIR, test_file)
     if os.path.exists(train_path):
         if mode == 'error':
-            raise IOError('train file:{} already exsits. Please change it in conf.py'.format(train_file))
+            raise IOError('train file:{0} already exsits. Please change it in conf.py'.format(train_file))
         elif mode == 'overwrite':
             os.remove(train_path)
             os.remove(test_path)
@@ -90,6 +92,38 @@ def split_data(infile, train_file, test_file, train_ratio=0.8, chunksize=200000,
     return os.path.abspath(train_file), os.path.abspath(test_file)
 
 
+@clock('Train test split for fastfm has completed!')
+def split_data_fastfm(infile, train_ratio=TRAIN_RATIO):
+    """fastFM package need the sparse matrix input for train the model"""
+    from sklearn.model_selection import train_test_split
+    from scipy.sparse import coo_matrix
+    target, feature = target_feature_split(infile)
+    target = np.array([1, -1, -1, -1, 1, 1, 1, -1, -1, 1])
+    feature = coo_matrix(np.random.rand(10, 20))
+    feature = coo_matrix(feature)
+    target = np.array(target)
+    train_X, test_X, train_y, test_y = train_test_split(feature, target,
+                                                        train_size=train_ratio, random_state=0)
+    return train_X, test_X, train_y, test_y
+
+
+@clock('feature target split has finished!')
+def target_feature_split(infile):
+    """infile must have the same length"""
+    target = []
+    feature = []
+    with open(infile) as f:
+        for line in f:
+            line = line.strip('\n').split(' ')
+            target.append(2*float(line.pop(0))-1)
+            feature_line = []
+            for elem in line:
+                ind, val = elem.split(':')
+                feature_line.append(float(val))
+            feature.append(feature_line)
+    return np.array(target), np.array(feature)
+
+
 def create_table(table, cols, types):
     """create table sql for hive"""
     head = 'create table if not exists ' + table + '( '
@@ -101,21 +135,20 @@ def create_table(table, cols, types):
     return head + body + tail
 
 
-def start_spark(master='yarn'):
-    if master == 'yarn':
-        conf = SparkConf().setAppName("FM embedding").setMaster('yarn').set('spark.executor.memory', '10g')
+def start_spark(yarn_master=True):
+    conf = SparkConf().setAppName("FM embedding").\
+           set('spark.executor.memory', '10g').set('spark.driver.memory', '10g').\
+           set('spark.driver.cores', '3')
+    if yarn_master:
+        conf.setMaster('yarn')
     else:
-        conf = SparkConf().setAppName("FM embedding")
+        conf.setMaster('local[*]')
     sc = SparkContext(conf=conf)
     ss = SparkSession.builder.config(conf=conf).enableHiveSupport().getOrCreate()
-    print('********************** SparkContext and HiveContext is ready ************************')
+    print('********************** SparkContext and HiveContext is ready ************************\n')
     return sc, ss
 
-if __name__ == '__main__':
-    index_dic = get_new_index(ORIGIN_TRAIN)
-    pickle.dump(index_dic, open(os.path.join(MODEL_DIR, 'index_dump'), 'wb'))
-    _make_path(DATA_DIR)
-    _make_path(MODEL_DIR)
+
 
 
 
