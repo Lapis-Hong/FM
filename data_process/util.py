@@ -138,7 +138,7 @@ def create_table(table, cols, types):
 def start_spark(yarn_master=True):
     conf = SparkConf().setAppName("FM embedding").\
            set('spark.executor.memory', '10g').set('spark.driver.memory', '10g').\
-           set('spark.driver.cores', '3')
+           set('spark.driver.cores', '4').set('spark.cores.max', '120')
     if yarn_master:
         conf.setMaster('yarn')
     else:
@@ -149,7 +149,25 @@ def start_spark(yarn_master=True):
     return sc, ss
 
 
-
+def pandas_to_spark(file_name):
+    # df = spark.read.format("csv").options(header="true").load("fmtrain20170704")
+    # df.dropna(axis=1, how='all')
+    # df[df==0] = np.nan  # can take 0 to NaN
+    # pandas_df.info()
+    _, ss = start_spark()
+    df = pd.read_csv(file_name)  # null is NaN in pandas
+    if df.isnull().any().sum() > 0:
+        category_cols = df.columns[df.dtypes == object]  # object is mix type
+        if len(category_cols) > 0:
+            df.fillna('0', inplace=True)
+            numerical_cols = df.columns[df.dtypes != object]
+            df = df[numerical_cols].astype(float)  # change the string '0' to float 0.0
+            spark_df = ss.createDataFrame(df)
+        else:
+            spark_df = ss.createDataFrame(df)
+    else:
+        spark_df = ss.createDataFrame(df)
+    return spark_df
 
 
 

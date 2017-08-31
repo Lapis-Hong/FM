@@ -1,17 +1,17 @@
 # coding: utf-8
 
 """path and table config 必改参数"""
-FROM_HDFS_TRAIN = 'hdfs://bipcluster/spark/vipshop/vipjrd/pre_credit_user_fm/train'
-FROM_HDFS_PRD = 'hdfs://bipcluster/spark/vipshop/vipjrd/pre_credit_user_fm/prd'
+FROM_HDFS_TRAIN = 'hdfs://bipcluster/spark/vipshop/vipjrd/pre_credit_user_fm/train/20170830'
+FROM_HDFS_PRD = 'hdfs://bipcluster/spark/vipshop/vipjrd/pre_credit_user_fm/prd/20170830'
 
-TO_HDFS_TRAIN = 'hdfs://bipcluster/spark/vipshop/vipjrd/pre_credit_user_fm_embedding/train'
-TO_HDFS_PRD = 'hdfs://bipcluster/spark/vipshop/vipjrd/pre_credit_user_fm_embedding/prd'
+TO_HDFS_TRAIN = 'hdfs://bipcluster/spark/vipshop/vipjrd/pre_credit_user_fm_embedding/train/20170830'
+TO_HDFS_PRD = 'hdfs://bipcluster/spark/vipshop/vipjrd/pre_credit_user_fm_embedding/prd/20170830'
 
-ORIGIN_TRAIN = 'fmtrain20170403'  # original libsvm train file
-ORIGIN_PRD = 'fmprd20170403'
+ORIGIN_TRAIN = 'fmtrain20170830'  # original libsvm train file
+ORIGIN_PRD = 'fmprd20170830'
 
 # FM format total dataset
-FM_TRAIN = 'train20170403'
+FM_TRAIN = 'train20170830'
 # FM train dataset
 TRAIN = 'train'
 # FM test dataset

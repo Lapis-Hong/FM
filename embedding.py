@@ -29,9 +29,9 @@ def load_latent():
 def embedding_to_local(latent, infile, outfile, threshold=564, isappend=True, islibsvm=False):
     """
     take the fm latent vectors as the embedding features, generate new data
-    :param infile: original data path, the original data has must have the libsvm format
-    :param outfile: embedding data path
     :param latent: latent vector
+    :param infile: original train or prd data path
+    :param outfile: embedding train or prd data path
     :param threshold: the threshold for continuous and category features
     :param isappend: True: add embedding category features to the original continuous features, 
                      False: for only generate the embedding category features
@@ -92,15 +92,28 @@ def embedding_to_local(latent, infile, outfile, threshold=564, isappend=True, is
 
 @clock('Embedding data generator is ready...')
 def embedding_generator(latent, infile, hastarget=False, threshold=564, isappend=True, islibsvm=False):
-    """only support infile with same feature length"""
+    """
+    only support infile with same feature length
+    :param latent: latent matrix, list
+    :param infile: train or prd file
+    :param hastarget: when infile=ORIGIN_PRD, set True to add the 'order_id' field for embedding into hive
+    :param threshold: only index after threshold will do embedding
+    :param isappend: True for including the original feature, False for only the embedding feature
+    :param islibsvm: True for libsvm format
+    :return: a generator list format
+    """
     index_mapping = pickle.load(open('index_dump', 'rb'))
     total_dim = 0
-
+    if hastarget:
+        targets = get_target(ORIGIN_TRAIN)  # list
     with open(infile) as f:
-        for line in f:
-            temp = line.strip('\n').split(' ')  # ['1:0','2:1','5:0']
-            label = temp.pop(0)  # label is string
+        for lineno, line in enumerate(f):
+            target = []
             feature_line = []
+            temp = line.strip('\n').split(' ')  # ['1:0','2:1','5:0']
+            target.append(temp.pop(0))  # add order_id
+            if hastarget:
+                target.append(targets[lineno])  # add target
             for item in temp:
                 index, value = item.split(':')
                 if int(index) <= threshold:
@@ -117,7 +130,7 @@ def embedding_generator(latent, infile, hastarget=False, threshold=564, isappend
                 raise ValueError('the feature length is different, expect to be the same!')
             if islibsvm:
                 feature_line = [str(ind) + ':' + val for ind, val in enumerate(feature_line)]
-            yield [label] + feature_line  # list format
+            yield target + feature_line  # list format
 
 
 def latent_to_hive(latent, dim):
@@ -217,7 +230,7 @@ if __name__ == '__main__':
     embedding_to_hdfs(prd_generator_hdfs, hdfs_file=TO_HDFS_PRD)
 
     # embedding to hive
-    generator_hive = embedding_generator(latent, infile=ORIGIN_PRD)
+    generator_hive = embedding_generator(latent, infile=ORIGIN_PRD, hastarget=True)
     embedding_to_hive(generator_hive)
     sc.stop()
     ss.stop()

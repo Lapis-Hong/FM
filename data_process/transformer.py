@@ -1,37 +1,9 @@
 """
 Wrap the Spark feature transformers to use for our feature transformation
 """
-import pandas as pd
 from functools import wraps
 from pyspark import *
 from pyspark.ml.feature import *
-from data_process.util import start_spark
-
-# vectorize = udf(lambda vs: Vectors.dense(vs), VectorUDT())
-# assembler = VectorAssembler(
-#     inputCols=["features[{0}]".format(i) for i in range(n)],
-#     outputCol="features_vector")
-
-
-def pandas_to_spark(file_name):
-    _, ss = start_spark()
-    df = pd.read_csv(file_name)  # null is NaN in pandas
-    if df.isnull().any().sum() > 0:
-        category_cols = df.columns[df.dtypes == object]  # object is mix type
-        if len(category_cols) > 0:
-            df.fillna('0', inplace=True)
-            numerical_cols = df.columns[df.dtypes != object]
-            df = df[numerical_cols].astype(float)  # change the string '0' to float 0.0
-            spark_df = ss.createDataFrame(df)
-        else:
-            spark_df = ss.createDataFrame(df)
-    else:
-        spark_df = ss.createDataFrame(df)
-    return spark_df
-# df = spark.read.format("csv").options(header="true").load("fmtrain20170704")
-# df.dropna(axis=1, how='all')
-# df[df==0] = np.nan  # can take 0 to NaN
-# pandas_df.info()
 
 
 def multitransform(func):  # need modify

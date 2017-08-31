@@ -3,16 +3,12 @@
 TODO: need to improve the performance and test for multiple days data
 """
 import time
-import os
-import tempfile
 from collections import Counter
 
 import pandas as pd
 from pyspark import *
 from pyspark.ml.feature import *
 from pyspark.sql import SparkSession
-from pyspark.ml.linalg import Vectors, VectorUDT
-from pyspark.mllib.linalg import Vectors, VectorUDT
 from pyspark.sql.types import Row
 
 from conf import *
@@ -20,7 +16,7 @@ from mysql import trans_dic
 from transformer import *
 from data_process import clock
 from data_process.util import start_spark
-from shell import load_data_from_hdfs
+from data_process.shell import load_data_from_hdfs
 
 # test_dic = {'age': 'discretize(20)', 'sex': 'onehot', 'wait_pay': 'bucket(min,10,100,max);onehot()'}
 
@@ -34,76 +30,77 @@ def read_from_hive(table, from_dt, to_dt):
 
 def parse_transform(transform_dict):
     transform_list = []
-    for field_name in transform_dict.keys():
-        if transform_dict[field_name] is None:
-            transform_list.append(('delete', field_name))
+    for field in transform_dict.keys():
+        if transform_dict[field] is None:
+            transform_list.append(('delete', field))
         else:
-            transformer = transform_dict[field_name].split(';')
+            transformer = transform_dict[field].split(';')
             for transform in transformer:
                 if transform.startswith('discretize'):
                     start = transform.find('(') + 1
                     end = transform.find(')')
                     arg = transform[start:end]
-                    transform_list.append(('discretizer', field_name, int(arg)))
+                    transform_list.append(('discretizer', field, int(arg)))
                 elif transform.startswith('bucket'):
                     start = transform.find('(') + 1
                     end = transform.find(')')
                     arg = transform[start:end]
                     arg = arg.replace('min', "-inf")
                     arg = arg.replace('max', "inf")
-                    transform_list.append(('bucketizer', field_name, [float(w) for w in arg.split(',')]))
+                    transform_list.append(('bucketizer', field, [float(w) for w in arg.split(',')]))
                 elif transform.startswith('onehot'):
-                    transform_list.append(('onehot', field_name))
+                    transform_list.append(('onehot', field))
                 elif transform.startswith('standardnormalize'):
-                    transform_list.append(('standard_scaler', field_name))
+                    transform_list.append(('standard_scaler', field))
                 elif transform.startswith('Untransform'):
                     pass
                 else:
-                    raise Exception('transform {0} of field {1} is not found, please check the transform'.format(transform, field_name))
+                    raise Exception('transform {0} of field {1} is not found, please check the transform'.format(transform, field))
     c = Counter(elem[0] for elem in transform_list)
     print(c)
     print('There are total {0} transformers need to be transform'.format(len(transform_list)))
-    return transform_list
+    return transform_list  # each elem is a tuple
 
 
 @clock()
 def transform_pipeline(data, transform):
     # data_type = dict(data.dtypes)
-    data_frame = data
+    df = data.drop('order_sn', 'dt').cache()
     for index, item in enumerate(transform):
-        #if data_type[item[1]] == 'string':
-        data_frame = data_frame.withColumn(item[1], data_frame[item[1]].astype('double'))  # change the column type
-        data_frame = data_frame.fillna(0)  # alias for df.na.fill()
+        tran, col = item[0], item[1]
+        # change the column type, alias for df.na.fill()
+        df = df.withColumn(col, df[col].astype('double')).fillna(0, col)
         t0 = time.time()
-        if item[0] == 'bucketizer':
-            df = bucktizer(data_frame, item[1], 'temp', splits=item[2], drop=True)
-        elif item[0] == 'discretizer':
-            df = discretizer(data_frame, item[1], 'temp', numBuckets=item[2], drop=True)
-        elif item[0] == 'onehot':
-            df = onehot(data_frame, item[1], 'temp', drop=True)
-        elif item[0] == 'standard_scaler':
-            df_temp = vector_assembler(data_frame, [item[1]], 'Vector', drop=True)  # convert double to the Vectors type
+        if tran == 'bucketizer':
+            df = bucktizer(df, col, 'temp', splits=item[2], drop=True)
+        elif tran == 'discretizer':
+            df = discretizer(df, col, 'temp', numBuckets=item[2], drop=True)
+        elif tran == 'onehot':
+            df = onehot(df, item[1], 'temp', drop=True)
+        elif tran == 'standard_scaler':
+            df_temp = vector_assembler(df, [col], 'Vector', drop=True)  # convert double to the Vectors type
             df = standard_scaler(df_temp, 'Vector', 'temp', drop=True)
-        elif item[0] == 'delete':
-            df = data_frame.drop(item[1])
+        elif tran == 'delete':
+            df = df.drop(col)
         else:
             raise TypeError('Unknown transfrom type, please check the input')
-        data_frame = df.withColumnRenamed('temp', item[1])
-        print('The {}th feature {}; transform {} has finished, take {} sec.'.format(index+1, item[1], item[0], time.time()-t0))
+        df = df.withColumnRenamed('temp', col)#.cache()
+        print('The {0}th feature {1}; transform {2} has finished, take {3} sec.'.format(index+1, col, tran, time.time()-t0))
     print('Feature transform has done!')
-    print(data_frame.columns)
-    return data_frame
+    print('Data after transform has {0} columns, as follows\n{1}'
+          .format(len(df.columns), df.columns))
+    return df.drop('order_id'), df.drop('target')
 
 
 @clock()
-def write_to_hdfs(data, path=os.path.join(tempfile.mkdtemp(), 'data')):
-    data.write.mode('error').parquet(path)
-    print('Already save data to {}'.format(path))
-    return path
+def write_to_hdfs(data, path):
+    data.write.mode('overwrite').parquet(path)  # default is 'error' mode 'ignore' 'append'
+    print('Already save data to {0}'.format(path))
 
 
 if __name__ == '__main__':
-    path = 'hdfs://bipcluster/user/u_jrd_lv1/fm_data'
+    train_temp_path = 'hdfs://bipcluster/user/u_jrd_lv1/fm_train'
+    prd_temp_path = 'hdfs://bipcluster/user/u_jrd_lv1/fm_prd'
     # begin = datetime.date(2017, 4, 21)
     # end = datetime.date(2017, 7, 20)
     # for i in range((end-begin).days+1):
@@ -113,13 +110,15 @@ if __name__ == '__main__':
     # print(dataset.take(1))
     transformers = parse_transform(trans_dic)
     # print(transformers)
-    data_transformed = transform_pipeline(dataset, transformers)
-    print(data_transformed.first())
-    # hdfs_path = write_to_hdfs(data_transformed, 'pre_credit_user_fm')
-    data_transformed.write.mode('append').parquet(path)
-    # print('{0} feature transform has finished'.format(dt))
+    train_transformed, prd_transformed = transform_pipeline(dataset, transformers)
+    print(train_transformed.first())
+    # hdfs_path = write_to_hdfs(data_transformed, temp_path)
+    train_transformed.write.parquet(train_temp_path)  # which type to write???
+    prd_transformed.write.parquet(prd_temp_path)
 
-    load_data_from_hdfs(path, 'spark df')
+    load_data_from_hdfs(train_temp_path, 'spark_df_train')
+    load_data_from_hdfs(prd_temp_path, 'spark_df_prd')
+
 
 
 
