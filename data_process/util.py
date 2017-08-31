@@ -40,13 +40,7 @@ def get_new_index(infile, eachline=False):
             if not eachline:
                 break
         index_list = sorted(list(index_set))
-        if sys.version < '2.7':
-            dic = dict([(k, v) for v, k in enumerate(index_list)])
-        else:
-            try:
-                dic = {k: v for v, k in enumerate(index_list)}  # mapping the index to new index
-            except SyntaxError:
-                pass
+        dic = dict([(k, v) for v, k in enumerate(index_list)])  # mapping the index to new index
         return dic
 
 
