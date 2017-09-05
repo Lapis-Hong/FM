@@ -5,7 +5,10 @@ import sys
 import tempfile
 
 import numpy as np
-from fastFM import als, mcmc, sgd
+try:
+    from fastFM import als, mcmc, sgd
+except ImportError:
+    print('Warning: fastFM package is not installed, can not use')
 
 from data_process import *
 

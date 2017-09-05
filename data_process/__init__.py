@@ -19,7 +19,7 @@ def clock(info=''):  # generator a decorator
             t0 = time.time()
             result = func(*args, **kwargs)
             elapsed = time.time() - t0
-            print(info + '  Call ' + func.__name__ + '()' + ' Take {0} sec.\n'.format(elapsed))
+            print(info + '  Call ' + func.__name__ + '() Take {0} sec.\n'.format(elapsed))
             # in python 2.6, format need to specify the location like {0}, {1}
             return result  # important
         return wrapper

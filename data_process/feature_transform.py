@@ -5,18 +5,15 @@ TODO: need to improve the performance and test for multiple days data
 import time
 from collections import Counter
 
-import pandas as pd
 from pyspark import *
 from pyspark.ml.feature import *
-from pyspark.sql import SparkSession
-from pyspark.sql.types import Row
 
 from conf import *
 from mysql import trans_dic
 from transformer import *
 from data_process import clock
 from data_process.util import start_spark
-from data_process.shell import load_data_from_hdfs
+from data_process.shell import load_data_from_hdfs, gen_libsvm
 
 # test_dic = {'age': 'discretize(20)', 'sex': 'onehot', 'wait_pay': 'bucket(min,10,100,max);onehot()'}
 
@@ -65,7 +62,7 @@ def parse_transform(transform_dict):
 @clock()
 def transform_pipeline(data, transform):
     # data_type = dict(data.dtypes)
-    df = data.drop('order_sn', 'dt').cache()
+    df = data.drop('order_sn', 'dt', 'user_id').cache()
     for index, item in enumerate(transform):
         tran, col = item[0], item[1]
         # change the column type, alias for df.na.fill()
@@ -94,7 +91,7 @@ def transform_pipeline(data, transform):
 
 @clock()
 def write_to_hdfs(data, path):
-    data.write.mode('overwrite').parquet(path)  # default is 'error' mode 'ignore' 'append'
+    data.write.mode('overwrite').save(path)  # default is 'error' mode 'ignore' 'append'
     print('Already save data to {0}'.format(path))
 
 
@@ -112,12 +109,15 @@ if __name__ == '__main__':
     # print(transformers)
     train_transformed, prd_transformed = transform_pipeline(dataset, transformers)
     print(train_transformed.first())
-    # hdfs_path = write_to_hdfs(data_transformed, temp_path)
-    train_transformed.write.parquet(train_temp_path)  # which type to write???
-    prd_transformed.write.parquet(prd_temp_path)
+
+    write_to_hdfs(train_transformed, train_temp_path)
+    write_to_hdfs(prd_transformed, prd_temp_path)
 
     load_data_from_hdfs(train_temp_path, 'spark_df_train')
     load_data_from_hdfs(prd_temp_path, 'spark_df_prd')
+    gen_libsvm('spark_df_train', ORIGIN_TRAIN)
+    gen_libsvm('spark_df_prd', ORIGIN_PRD)
+
 
 
 

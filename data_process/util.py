@@ -10,7 +10,7 @@ from conf import *
 from data_process import *
 
 __all__ = ['make_path', 'split_data', 'split_data_fastfm', 'get_new_index',
-           'get_target', 'target_feature_split', 'create_table', 'start_spark']
+           'get_target', 'target_feature_split', 'create_table', 'start_spark', 'pandas_to_spark']
 
 
 def make_path(*args):
@@ -83,17 +83,17 @@ def split_data(infile, train_file, test_file, train_ratio=TRAIN_RATIO, chunksize
         test.to_csv(test_path, mode='a', index=False, header=None)
     print('Train data length: {0}'.format(train_length))
     print('Test data length: {0}'.format(test_length))
-    return os.path.abspath(train_file), os.path.abspath(test_file)
 
 
 @clock('Train test split for fastfm has completed!')
 def split_data_fastfm(infile, train_ratio=TRAIN_RATIO):
     """fastFM package need the sparse matrix input for train the model"""
-    from sklearn.model_selection import train_test_split
+    try:
+        from sklearn.model_selection import train_test_split
+    except ImportError:
+        from sklearn.cross_validation import train_test_split
     from scipy.sparse import coo_matrix
     target, feature = target_feature_split(infile)
-    target = np.array([1, -1, -1, -1, 1, 1, 1, -1, -1, 1])
-    feature = coo_matrix(np.random.rand(10, 20))
     feature = coo_matrix(feature)
     target = np.array(target)
     train_X, test_X, train_y, test_y = train_test_split(feature, target,
@@ -125,21 +125,21 @@ def create_table(table, cols, types):
     for i, j in zip(cols, types):
         body.append('{0} {1}'.format(i, j))
     body = ','.join(body)
-    tail = ') partitioned by (dt string)'
+    tail = ')'  # partitioned by (dt string)'
     return head + body + tail
 
 
 def start_spark(yarn_master=True):
-    conf = SparkConf().setAppName("FM embedding").\
-           set('spark.executor.memory', '10g').set('spark.driver.memory', '10g').\
-           set('spark.driver.cores', '4').set('spark.cores.max', '120')
+    conf = SparkConf().setAppName("FM embedding").setLogLevel("ERROR").\
+           set('spark.executor.memory', EXECUTOR_MEMORY).set('spark.driver.memory', DRIVER_MEMORY).\
+           set('spark.driver.cores', DRIVER_CORES).set('spark.cores.max', CORES_MAX)
     if yarn_master:
         conf.setMaster('yarn')
     else:
         conf.setMaster('local[*]')
     sc = SparkContext(conf=conf)
     ss = SparkSession.builder.config(conf=conf).enableHiveSupport().getOrCreate()
-    print('********************** SparkContext and HiveContext is ready ************************\n')
+    print('*'*20 + 'SparkContext and HiveContext is ready' + '*'*20 + '\n')
     return sc, ss
 
 

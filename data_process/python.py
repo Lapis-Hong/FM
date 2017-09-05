@@ -39,7 +39,7 @@ def convert_from_local(infile, outfile, isprd=False, reindex=False, keep_zero=Fa
     :param keep_zero: flag, True for not remove zero
     :return: None
     """
-    index_mapping = pickle.load(open('dump', 'rb')) if reindex else None
+    index_mapping = pickle.load(open(os.path.join(MODEL_DIR, 'index_dump'), 'rb')) if reindex else None
     print('index mapping has loaded...')
     with open(infile) as libsvm:  # in python2.6, can not use with open...as..., open...as...
         with open(os.path.join(DATA_DIR, outfile), 'w') as libfm:

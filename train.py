@@ -79,24 +79,30 @@ def grid_search(package=PACKAGE, method=METHOD, dim_k=DIM, iter_num=NUM_ITER, in
     print('\nThe best parameter combination is:\n{0} reach AUC {1:.5}'.format(para_best, auc_best))
     return model_best
 
+
+def save_latent():
+    model_default = train(silent=False)
+    latent_vec = model_default.pairwise_interactions
+    pickle.dump(latent_vec, open(os.path.join(MODEL_DIR, 'latent_dump.libfm'), 'wb'))
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train the FM model and tune the parameters')
     parser.add_argument("-p", "--package", default='libfm', choices=['libfm', 'fastfm'], help='fm package')
     parser.add_argument("-m", "--method", default='mcmc', choices=['sgd', 'als', 'mcmc'], help='training algorithm')
     parser.add_argument("-k", "--dim_k", type=int, default=[8], nargs='*', help='the latent dimension k')
     parser.add_argument("-n", "--iter_num", type=int, default=[100], nargs='*', help='the iteration number')
-    parser.add_argument("-lr", "--learn_rate", type=int, default=0.01, help='learning rate')
-    parser.add_argument("-i", "--init_stdev", type=int, default=0.1, help='inititial standard deviation of latent matrix')
-    parser.add_argument("-r0", "--r0_reg", type=int, default=0.01, help='r0_regularzation')
-    parser.add_argument("-r1", "--r1_reg", type=int, default=0.01, help='r1_regularzation')
-    parser.add_argument("-r2", "--r2_reg", type=int, default=0.01, help='r2_regularzation')
+    parser.add_argument("-lr", "--learn_rate", type=float, default=0.01, help='learning rate')
+    parser.add_argument("-i", "--init_stdev", type=float, default=0.1, help='inititial standard deviation of latent matrix')
+    parser.add_argument("-r0", "--r0_reg", type=float, default=0.01, help='r0_regularzation')
+    parser.add_argument("-r1", "--r1_reg", type=float, default=0.01, help='r1_regularzation')
+    parser.add_argument("-r2", "--r2_reg", type=float, default=0.01, help='r2_regularzation')
     parser.add_argument("-v", "--silent", default=False, help='verbose mode')
     arg = parser.parse_args()
     param_dict = vars(arg)
 
     if len(arg.iter_num) > 1 or len(arg.dim_k) > 1:
         if arg.package == 'fastfm':
-            train_X, test_X, train_y, test_y = split_data_fastfm(ORIGIN_TRAIN, train_ratio=0.5)
+            train_X, test_X, train_y, test_y = split_data_fastfm(ORIGIN_TRAIN)
         model = grid_search(**param_dict)
     else:
         param_dict['dim_k'] = param_dict['dim_k'][0]  # turn 'dim_k':[8] to 8

@@ -8,6 +8,7 @@ from pyspark.sql.types import *
 from conf import *
 from train import train
 from data_process import *
+from data_process.shell import save_data_to_hdfs
 from data_process.util import *
 
 
@@ -25,8 +26,22 @@ def load_latent():
     return latent, dim
 
 
+def latent_to_hive(latent, dim):
+    cols = ['dim{0}'.format(i+1) for i in range(dim)]
+    types = ['string'] * dim
+    sql = create_table(LATENT_TABLE, cols, types)
+    global ss
+    ss.sql(sql)
+    print('Already create {0} in hive'.format(LATENT_TABLE))
+    df = ss.createDataFrame(latent)
+    df.registerTempTable('dataset')
+    ss.sql("insert into table {0} select * from dataset".format(LATENT_TABLE))
+    print('Successfully write latent vector to hive!')
+
+
 @clock('Successfully saved embedding data.')
-def embedding_to_local(latent, infile, outfile, threshold=564, isappend=True, islibsvm=False):
+def embedding_to_local(latent, infile, outfile, threshold=THRESHOLD, isappend=ISAPPEND, islibsvm=False):
+
     """
     take the fm latent vectors as the embedding features, generate new data
     :param latent: latent vector
@@ -38,8 +53,8 @@ def embedding_to_local(latent, infile, outfile, threshold=564, isappend=True, is
     :param islibsvm: True for saving the libsvm format, False for saving the dataframe format
     """
     print('*'*30 + 'Start saving the embedding data...' + '*'*30)
-    index_mapping = pickle.load(open('index_dump', 'rb'))
-    print('index mapping:{}'.format(index_mapping))
+    index_mapping = pickle.load(open(os.path.join(MODEL_DIR, 'index_dump'), 'rb'))
+    # print('index mapping:{0}'.format(index_mapping))
     with open(infile) as f1:
         with open(outfile, 'w') as f2:
             total_dim, not_embedding_dim, embedding_dim = set(), set(), set()
@@ -68,7 +83,7 @@ def embedding_to_local(latent, infile, outfile, threshold=564, isappend=True, is
                     each_line = (str(val) for val in feature_line)
                 f2.write(' ' + ' '.join(each_line) + '\n')
 
-                if (lineno+1) % 10000 == 0:
+                if (lineno+1) % 100000 == 0:
                     print('Already write {0} embedding data to {1}'.format(lineno+1, outfile))
 
                 if cnt1 not in not_embedding_dim:
@@ -91,7 +106,7 @@ def embedding_to_local(latent, infile, outfile, threshold=564, isappend=True, is
 
 
 @clock('Embedding data generator is ready...')
-def embedding_generator(latent, infile, hastarget=False, threshold=564, isappend=True, islibsvm=False):
+def embedding_generator(latent, infile, hastarget=False, threshold=THRESHOLD, isappend=ISAPPEND, islibsvm=True):
     """
     only support infile with same feature length
     :param latent: latent matrix, list
@@ -102,7 +117,7 @@ def embedding_generator(latent, infile, hastarget=False, threshold=564, isappend
     :param islibsvm: True for libsvm format
     :return: a generator list format
     """
-    index_mapping = pickle.load(open('index_dump', 'rb'))
+    index_mapping = pickle.load(open(os.path.join(DATA_DIR, 'index_dump'), 'rb'))
     total_dim = 0
     if hastarget:
         targets = get_target(ORIGIN_TRAIN)  # list
@@ -133,104 +148,93 @@ def embedding_generator(latent, infile, hastarget=False, threshold=564, isappend
             yield target + feature_line  # list format
 
 
-def latent_to_hive(latent, dim):
-    cols = ['dim{0}'.format(i+1) for i in range(dim)]
-    types = ['string'] * dim
-    sql = create_table(LATENT_TABLE, cols, types)
-    global ss
-    ss.sql(sql)
-    print('Already create {0} in hive'.format(LATENT_TABLE))
-    df = ss.createDataFrame(latent)
-    df.registerTempTable('dataset')
-    ss.sql("insert into table temp_jrd.pre_credit_user_fm_latent partition(dt = {0}) select * from dataset".format(DT))
-    print('Successfully write latent vector to hive!')
-
-
 @clock('Successfully write all embedding data to hive!')
-def embedding_to_hive(generator, batch_size=10000):
-    df = []
-    for lineno, line in enumerate(generator):
-        df.append(line)
-        if lineno == 0:
-            dim = len(line)
-            print('The first row of embedding data: {0}'.format(line))
-            print('embedding feature dim is %s' % dim)
-            schema = StructType([StructField("order_id", StringType(), True)])
-            for i in range(dim - 1):
-                schema.add("f %d" % i, StringType(), True)
+def embedding_to_hive(generator, batch_size=BATCH_SIZE):
+    line = generator.next()
+    dim = len(line)
+    print('The first row of embedding data: {0}'.format(line))
+    print('Total embedding dim is %s' % dim)
+    schema = StructType([StructField("order_id", StringType(), True),
+                         StructField("target", ByteType(), True)])
+    for i in range(dim - 1):
+        schema.add("f %d" % i, StringType(), True)
+    cols = ['order_id'] + ['f{0}'.format(i) for i in range(dim - 1)]
+    types = ['string'] * dim
+    sql = create_table(EMBEDDING_TABLE, cols, types)
+    ss.sql(sql)  # create embedding table in hive
+    print('Successfully create table {0} in hive!'.format(EMBEDDING_TABLE))
 
-            cols = ['order_id'] + ['f{}'.format(i) for i in range(dim - 1)]
-            types = ['string'] * dim
-            sql = create_table(EMBEDDING_TABLE, cols, types)
-            ss.sql(sql)  # create embedding table in hive
-            print('Successfully create table {} in hive!'.format(EMBEDDING_TABLE))
-        if (lineno + 1) % batch_size == 0:
-            rdd = sc.parallelize(df)
-            print('the first rdd %s' % rdd.first())
-            embedding_df = ss.createDataFrame(rdd, schema)
-            print('the first embedding feature {0}'.format(embedding_df.first()))
-            embedding_df.registerTempTable("dataset1")
-            ss.sql("insert into table temp_jrd.pre_credit_user_fm_embedding partition(dt = {0}) select * from dataset1".format(DT))
-            print('Already write {0} embedding data to hive'.format(lineno))
-            del df
-            gc.collect()
-            df = []
+    batch_no = 1
+    while 1:
+        df = (generator.next() for i in range(batch_size))
+        try:
+            df.next()
+        except StopIteration:
+            break
+        rdd = sc.parallelize(df)
+        # print('the first rdd {0}'.format(rdd.first()))
+        embedding_df = ss.createDataFrame(rdd, schema)
+        # print('the first embedding feature {0}'.format(embedding_df.first()))
+        embedding_df.registerTempTable("temp")
+        ss.sql("insert into table {0} select * from temp".format(EMBEDDING_TABLE))
+        print('Already write {0} embedding data to hive'.format(batch_size*batch_no))
+        batch_no += 1
 
 
-@clock('Successfully write all embedding data to local!')
+@clock('Successfully write all embedding data to local, using generator!')
 def embedding_to_local_generator(generator, outfile):
     with open(outfile, 'w') as f:
         for lineno, line in enumerate(generator):
             f.write(' '.join(line) + '\n')
             if lineno == 0:
                 print('The first row of embedding data: {0}'.format(line))
-            if (lineno + 1) % 10000 == 0:
+            if (lineno + 1) % 100000 == 0:
                 print('Already write {0} samples into {1}'.format(lineno+1, outfile))
 
 
-"""TODO: lost last batch data"""
 @clock('Successfully write all embedding data to hdfs!')
-def embedding_to_hdfs(generator, hdfs_file, batch_size=10):
-    df = []
-    rdd = sc.parallelize([])
-    for lineno, line in enumerate(generator):
-        df.append(line)
-        if lineno == 0:
-            print('The first row of embedding data: {0}'.format(line))
-        if (lineno + 1) % batch_size == 0:
-            rdd_batch = sc.parallelize(df)
-            print('the first rdd %s' % rdd_batch.first())
-            rdd = rdd.union(rdd_batch)
-            del df
-            gc.collect()
-            df = []
-    print('totol data length is {}'.format(rdd.count()))
-    rdd.saveAsTextFile(hdfs_file)
+def embedding_to_hdfs(generator, hdfs_file, batch_size=BATCH_SIZE):
+    batch_no = 1
+    while 1:
+        # a subgenertor much faster and save memory, list.append() is too slow
+        df = (generator.next() for i in range(batch_size))
+        try:
+            df.next()
+        except StopIteration:
+            break
+        hdfs_path = os.path.join(hdfs_file, str(batch_no))
+        sc.parallelize(df).saveAsTextFile(hdfs_path)
+        print('write {0} data into {1}'.format(batch_no*batch_size, hdfs_path))
+        batch_no += 1
 
-sc, ss = start_spark('local')
+
+sc, ss = start_spark()
+
 if __name__ == '__main__':
     latent, latent_dim = load_latent()
-    # index_mapping = pickle.load(open('dump', 'rb'))
-    # print(index_mapping)
     latent_to_hive(latent, latent_dim)
 
     # embedding to local
     embedding_to_local(latent, infile=ORIGIN_TRAIN, outfile=os.path.join(MODEL_DIR, EMBEDDING_TRAIN))
     embedding_to_local(latent, infile=ORIGIN_PRD, outfile=os.path.join(MODEL_DIR, EMBEDDING_PRD))
+    save_data_to_hdfs(os.path.join(MODEL_DIR, EMBEDDING_TRAIN), TO_HDFS_TRAIN)
+    save_data_to_hdfs(os.path.join(MODEL_DIR, EMBEDDING_PRD), TO_HDFS_PRD)
 
-    # train_generator_local = embedding_generator(latent, infile=ORIGIN_TRAIN, islibsvm=True)
-    # prd_generator_local = embedding_generator(latent, infile=ORIGIN_PRD, islibsvm=True)
-    # embedding_to_local_generator(train_generator_local, outfile=os.path.join(MODEL_DIR, EMBEDDING_TRAIN))
-    # embedding_to_local_generator(prd_generator_local, outfile=os.path.join(MODEL_DIR, EMBEDDING_PRD))
+    # train_generator = embedding_generator(latent, infile=ORIGIN_TRAIN, islibsvm=True)
+    # prd_generator = embedding_generator(latent, infile=ORIGIN_PRD, islibsvm=True)
+    # embedding_to_local_generator(train_generator, outfile=os.path.join(MODEL_DIR, EMBEDDING_TRAIN))
+    # embedding_to_local_generator(prd_generator, outfile=os.path.join(MODEL_DIR, EMBEDDING_PRD))
+    # save_data_to_hdfs(os.path.join(MODEL_DIR, EMBEDDING_TRAIN), TO_HDFS_TRAIN)
+    # save_data_to_hdfs(os.path.join(MODEL_DIR, EMBEDDING_PRD), TO_HDFS_PRD)
 
     # embedding to hdfs
-    train_generator_hdfs = embedding_generator(latent, infile=ORIGIN_TRAIN, islibsvm=True)
-    prd_generator_hdfs = embedding_generator(latent, infile=ORIGIN_PRD, islibsvm=True)
-    embedding_to_hdfs(train_generator_hdfs, hdfs_file=TO_HDFS_TRAIN)
-    embedding_to_hdfs(prd_generator_hdfs, hdfs_file=TO_HDFS_PRD)
+    train_generator = embedding_generator(latent, infile=ORIGIN_TRAIN)
+    prd_generator = embedding_generator(latent, infile=ORIGIN_PRD)
+    embedding_to_hdfs(train_generator, hdfs_file=TO_HDFS_TRAIN)
+    embedding_to_hdfs(prd_generator, hdfs_file=TO_HDFS_PRD)
 
     # embedding to hive
-    generator_hive = embedding_generator(latent, infile=ORIGIN_PRD, hastarget=True)
+    generator_hive = embedding_generator(latent, infile=ORIGIN_PRD)
     embedding_to_hive(generator_hive)
     sc.stop()
     ss.stop()

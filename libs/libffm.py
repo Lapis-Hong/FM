@@ -98,5 +98,5 @@ class Libffm:
         subprocess.call(args, shell=False)
 
 
-myffm = Libffm()
-myffm.fit('libffm_toy/criteo.tr.r100.gbdt0.ffm', 'model')
+# myffm = Libffm()
+# myffm.fit('libffm_toy/criteo.tr.r100.gbdt0.ffm', 'model')

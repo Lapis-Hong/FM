@@ -18,9 +18,9 @@ def load_data_from_hdfs(hdfs_path, file_name):
         print(e)
 
 
-def save_data_to_hdfs(hdfs_path, file_name):
+def save_data_to_hdfs(file_name, hdfs_path):
     """move current dir datasets to hdfs"""
-    subprocess.call("hadoop fs -mkdir {0}".format(hdfs_path), shell=True)
+    subprocess.call("hadoop fs -mkdir -p {0}".format(hdfs_path), shell=True)
     subprocess.call("hadoop fs -put {0} {1}".format(file_name, hdfs_path), shell=True)
     print('Already move the {0} to hdfs path {1}'.format(file_name, hdfs_path))
 

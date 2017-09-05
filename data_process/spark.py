@@ -26,13 +26,14 @@ from data_process.util import *
 @clock('Successfully convert to the libfm format!')
 def convert_from_local_byspark(infile, outfile, isprd=False, reindex=False, keep_zero=False):
     """use spark to convert the local libsvm data to libfm"""
-    index_mapping = pickle.load(open('dump', 'rb')) if reindex else None
+    from conf import MODEL_DIR
+    index_mapping = pickle.load(open(os.path.join(MODEL_DIR, 'index_dump'), 'rb')) if reindex else None
     print('index mapping has loaded')
     conf = SparkConf().setMaster('local[*]').set('spark.driver.memory', '10g').set('spark.executor.memory', '10g')
     sc = SparkContext(conf=conf)
     inpath = os.path.abspath(infile)
     # hadoop output dir can not be exists, must be removed
-    subprocess.call('hadoop fs -rm -r {}'.format(outfile), shell=True)
+    subprocess.call('hadoop fs -rm -r {0}'.format(outfile), shell=True)
     rdd = sc.textFile('file://{0}'.format(inpath))
     data = rdd.map(reformat(isprd, reindex, keep_zero, index_mapping))  # passing params func to map()
     # path = os.path.join(DATA_DIR, outfile)
