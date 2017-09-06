@@ -132,8 +132,9 @@ class Libfm:
                           "(https://github.com/jfloff/pywFM#installing).")
 
     @staticmethod
-    def _save(data, path, fmt='%.6f'):
+    def _save(data, path, fmt='%.8f'):
         np.savetxt(path, np.array(data), fmt=fmt)
+        print('Already save the model parameters into {0}'.format(path))
 
     def run(self, train_set, test_set, validation_set=None, meta=None):
         """Run factorization machine model against train and test data

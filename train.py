@@ -83,7 +83,9 @@ def grid_search(package=PACKAGE, method=METHOD, dim_k=DIM, iter_num=NUM_ITER, in
 def save_latent():
     model_default = train(silent=False)
     latent_vec = model_default.pairwise_interactions
-    pickle.dump(latent_vec, open(os.path.join(MODEL_DIR, 'latent_dump.libfm'), 'wb'))
+    path = os.path.join(MODEL_DIR, 'latent_dump.libfm')
+    pickle.dump(latent_vec, open(path, 'wb'))
+    print('Already dump the latent vectors into {0}'.format(path))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train the FM model and tune the parameters')

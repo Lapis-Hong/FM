@@ -2,22 +2,38 @@ try:
     import cPickle as pickle
 except ImportError:
     import pickle
+
 from pyspark import *
 
 from conf import *
 from data_process.shell import relabel_and_remove_zero
+from data_process.python import convert_from_local
+from data_process.spark import convert_from_local_byspark
 from data_process.util import *
 from train import train, save_latent
 from embedding import *
 
-
+# data process
 make_path(DATA_DIR, MODEL_DIR)
+load_data_from_hdfs(FROM_HDFS_TRAIN, ORIGIN_TRAIN)
+load_data_from_hdfs(FROM_HDFS_PRD, ORIGIN_PRD)
+
 index_dic = get_new_index(ORIGIN_TRAIN)
 pickle.dump(index_dic, open(os.path.join(MODEL_DIR, 'index_dump'), 'wb'))
 print('index mapping: {0}'.format(index_dic))
 
-relabel_and_remove_zero(ORIGIN_TRAIN, FM_TRAIN)
+if DATA_PROCESS == 'shell':
+    relabel_and_remove_zero(ORIGIN_TRAIN, os.path.join(DATA_DIR, FM_TRAIN))
+elif DATA_PROCESS == 'spark':
+    temp_path = 'hdfs://bipcluster/user/u_jrd_lv1/fm_temp'
+    convert_from_local_byspark(ORIGIN_TRAIN, temp_path)
+    load_data_from_hdfs(temp_path, os.path.join(DATA_DIR, FM_TRAIN))
+else:
+    convert_from_local(ORIGIN_TRAIN, FM_TRAIN)
 
+split_data(FM_TRAIN, TRAIN, TEST)
+
+# train model
 save_latent()
 latent, latent_dim = load_latent()
 

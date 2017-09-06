@@ -8,23 +8,6 @@ from data_process import *
 from data_process.util import *
 
 
-def load_data_from_hdfs(hdfs_path, file_name):
-    """move hdfs datasets to current dir"""
-    try:
-        subprocess.check_call("hadoop fs -text {0}/* > {1}".format(hdfs_path, file_name), shell=True)
-        print('Already load original data {0} from hdfs path {1}!'.format(file_name, hdfs_path))
-    except subprocess.CalledProcessError as e:
-        print("Command Error:", end=' ')
-        print(e)
-
-
-def save_data_to_hdfs(file_name, hdfs_path):
-    """move current dir datasets to hdfs"""
-    subprocess.call("hadoop fs -mkdir -p {0}".format(hdfs_path), shell=True)
-    subprocess.call("hadoop fs -put {0} {1}".format(file_name, hdfs_path), shell=True)
-    print('Already move the {0} to hdfs path {1}'.format(file_name, hdfs_path))
-
-
 @clock()
 def remove_zero_sed(infile, outfile):
     """remove zero index:feature pairs like 3:0, using linux sed tool"""
@@ -61,25 +44,10 @@ def relabel_and_remove_zero(infile, outfile):
     subprocess.check_call(cmd, shell=True)
 
 
-@clock('Successfully generate the libsvm format!')
-def gen_libsvm(infile, outfile):
-    awk_command = 'awk \'{printf $1} {for(i=2; i<=NF; i++) {printf "  "i-1":"$i}} {print " "}\' '
-    cmd = awk_command + infile + ">" + outfile
-    print('The shell command is:{0}'.format(cmd))
-    subprocess.check_call(cmd, shell=True)
-
-
 if __name__ == '__main__':
-    make_path(DATA_DIR, MODEL_DIR)
-
-    load_data_from_hdfs(FROM_HDFS_TRAIN, ORIGIN_TRAIN)
-    load_data_from_hdfs(FROM_HDFS_PRD, ORIGIN_PRD)
-
-    index_dic = get_new_index(ORIGIN_TRAIN)
-    pickle.dump(index_dic, open(os.path.join(MODEL_DIR, 'index_dump'), 'wb'))
-
+    load_data()
     # relabel(ORIGIN_TRAIN, 'temp')
     # remove_zero(ORIGIN_TRAIN, 'temp')
     # remove_zero_sed(ORIGIN_TRAIN, 'temp')
     relabel_and_remove_zero(ORIGIN_TRAIN, os.path.join(DATA_DIR, FM_TRAIN))
-    split_data(FM_TRAIN, TRAIN, TEST, mode='overwrite')
+    split_data(FM_TRAIN, TRAIN, TEST)

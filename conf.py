@@ -1,8 +1,8 @@
 # coding: utf-8
 
 """path and table config 必改参数"""
-FROM_HDFS_TRAIN = 'hdfs://bipcluster/spark/vipshop/vipjrd/pre_credit_user_fm/train/20170830'
-FROM_HDFS_PRD = 'hdfs://bipcluster/spark/vipshop/vipjrd/pre_credit_user_fm/prd/20170830'
+FROM_HDFS_TRAIN = 'hdfs://bipcluster/spark/vipshop/vipjrd/pre_credict_user_fm/train/20170830'
+FROM_HDFS_PRD = 'hdfs://bipcluster/spark/vipshop/vipjrd/pre_credict_user_fm/prd/20170830'
 
 TO_HDFS_TRAIN = 'hdfs://bipcluster/spark/vipshop/vipjrd/pre_credit_user_fm_embedding/train/20170830'
 TO_HDFS_PRD = 'hdfs://bipcluster/spark/vipshop/vipjrd/pre_credit_user_fm_embedding/prd/20170830'
@@ -55,6 +55,7 @@ TRAIN_RATIO = 0.8
 
 
 """parameter config for FM embedding 选改参数"""
+DATA_PROCESS = 'spark'  # data process merhod chose from{'spark', 'shell', 'python'}
 THRESHOLD = 564
 # 1 means append mode, 0 means not append
 ISAPPEND = 1

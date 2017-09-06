@@ -1,5 +1,6 @@
-import sys
+from __future__ import print_function
 import os
+import subprocess
 
 import pandas as pd
 import numpy as np
@@ -9,8 +10,10 @@ from pyspark.sql import SparkSession
 from conf import *
 from data_process import *
 
-__all__ = ['make_path', 'split_data', 'split_data_fastfm', 'get_new_index',
-           'get_target', 'target_feature_split', 'create_table', 'start_spark', 'pandas_to_spark']
+__all__ = ['make_path', 'load_data_from_hdfs', 'save_data_to_hdfs',
+           'split', 'split_data', 'split_data_fastfm', 'get_new_index',
+           'get_target', 'target_feature_split', 'gen_libsvm', 'load_data',
+           'create_table', 'start_spark', 'pandas_to_spark']
 
 
 def make_path(*args):
@@ -19,6 +22,41 @@ def make_path(*args):
         if not os.path.exists(dirname):
             os.mkdir(dirname)
             print('Already make directory: {0}'.format(dirname))
+
+
+def load_data_from_hdfs(hdfs_path, file_name):
+    """move hdfs datasets to current dir"""
+    try:
+        subprocess.check_call("hadoop fs -text {0}/* > {1}".format(hdfs_path, file_name), shell=True)
+        print('Already load original data {0} from {1}!'.format(file_name, hdfs_path))
+    except subprocess.CalledProcessError as e:
+        print("Command Error:", end=' ')
+        print(e)
+
+
+def save_data_to_hdfs(file_name, hdfs_path):
+    """move current dir datasets to hdfs"""
+    subprocess.call("hadoop fs -mkdir -p {0}".format(hdfs_path), shell=True)
+    subprocess.call("hadoop fs -put {0} {1}".format(file_name, hdfs_path), shell=True)
+    print('Already move the {0} to {1}'.format(file_name, hdfs_path))
+
+
+@clock('Successfully generate the libsvm format!')
+def gen_libsvm(infile, outfile):
+    awk_command = 'awk \'{printf $1} {for(i=2; i<=NF; i++) {printf "  "i-1":"$i}} {print " "}\' '
+    cmd = awk_command + infile + ">" + outfile
+    print('The shell command is:{0}'.format(cmd))
+    subprocess.check_call(cmd, shell=True)
+
+
+def split(infile, isprd=False):
+    os.mkdir('temp')
+    if isprd:
+        cmd = 'split -b -l 100000 {0} prdpart'.format(infile)
+    else:
+        cmd = 'split -b -l 100000 {0} trainpart'.format(infile)
+    print('The shell command is:{0}'.format(cmd))
+    subprocess.check_call(cmd, shell=True)
 
 
 @clock('Index mapping is finished!')
@@ -41,7 +79,17 @@ def get_new_index(infile, eachline=False):
                 break
         index_list = sorted(list(index_set))
         dic = dict([(k, v) for v, k in enumerate(index_list)])  # mapping the index to new index
-        return dic
+        return dic  # py2.7 can use OrderedDict
+
+
+@clock('Load dataset ')
+def load_data():
+    """make path, load dataset and dump index mapping"""
+    make_path(DATA_DIR, MODEL_DIR)
+    load_data_from_hdfs(FROM_HDFS_TRAIN, ORIGIN_TRAIN)
+    load_data_from_hdfs(FROM_HDFS_PRD, ORIGIN_PRD)
+    index_dic = get_new_index(ORIGIN_TRAIN)
+    pickle.dump(index_dic, open(os.path.join(MODEL_DIR, 'index_dump'), 'wb'))
 
 
 def get_target(infile):
@@ -50,7 +98,7 @@ def get_target(infile):
 
 
 @clock('Train test split has completed!')
-def split_data(infile, train_file, test_file, train_ratio=TRAIN_RATIO, chunksize=200000, mode='error'):
+def split_data(infile, train_file, test_file, train_ratio=TRAIN_RATIO, chunksize=200000, mode='overwrite'):
     """
     make train and test file for libFM train, shuffle the data
     :param infile: FM TRAIN FILE
@@ -130,7 +178,7 @@ def create_table(table, cols, types):
 
 
 def start_spark(yarn_master=True):
-    conf = SparkConf().setAppName("FM embedding").setLogLevel("ERROR").\
+    conf = SparkConf().setAppName("FM embedding").\
            set('spark.executor.memory', EXECUTOR_MEMORY).set('spark.driver.memory', DRIVER_MEMORY).\
            set('spark.driver.cores', DRIVER_CORES).set('spark.cores.max', CORES_MAX)
     if yarn_master:
@@ -138,8 +186,9 @@ def start_spark(yarn_master=True):
     else:
         conf.setMaster('local[*]')
     sc = SparkContext(conf=conf)
+    sc.setLogLevel("ERROR")  # why not work ??
     ss = SparkSession.builder.config(conf=conf).enableHiveSupport().getOrCreate()
-    print('*'*20 + 'SparkContext and HiveContext is ready' + '*'*20 + '\n')
+    print('*'*30 + 'SparkContext and HiveContext is ready' + '*'*30 + '\n')
     return sc, ss
 
 
@@ -162,7 +211,5 @@ def pandas_to_spark(file_name):
     else:
         spark_df = ss.createDataFrame(df)
     return spark_df
-
-
 
 

@@ -19,7 +19,6 @@ from pyspark.sql import SparkSession, Row
 from conf import *
 from data_process import *
 from data_process.python import reformat
-from data_process.shell import load_data_from_hdfs
 from data_process.util import *
 
 
@@ -29,8 +28,7 @@ def convert_from_local_byspark(infile, outfile, isprd=False, reindex=False, keep
     from conf import MODEL_DIR
     index_mapping = pickle.load(open(os.path.join(MODEL_DIR, 'index_dump'), 'rb')) if reindex else None
     print('index mapping has loaded')
-    conf = SparkConf().setMaster('local[*]').set('spark.driver.memory', '10g').set('spark.executor.memory', '10g')
-    sc = SparkContext(conf=conf)
+    sc, _ = start_spark(yarn_master=False)
     inpath = os.path.abspath(infile)
     # hadoop output dir can not be exists, must be removed
     subprocess.call('hadoop fs -rm -r {0}'.format(outfile), shell=True)
@@ -65,16 +63,10 @@ def convert_from_hive_byspark(table, dt,  outfile, save_origin=False, origin_fil
 
 
 if __name__ == '__main__':
-    make_path(DATA_DIR, MODEL_DIR)
-
-    load_data_from_hdfs(FROM_HDFS_TRAIN, ORIGIN_TRAIN)
-    load_data_from_hdfs(FROM_HDFS_PRD, ORIGIN_PRD)
-
-    index_dic = get_new_index(ORIGIN_TRAIN)
-    pickle.dump(index_dic, open(os.path.join(MODEL_DIR, 'index_dump'), 'wb'))
+    load_data()
 
     temp_path = 'hdfs://bipcluster/user/u_jrd_lv1/fm_temp'
     convert_from_local_byspark(ORIGIN_TRAIN, temp_path)
     load_data_from_hdfs(temp_path, os.path.join(DATA_DIR, FM_TRAIN))
-    split_data(FM_TRAIN, TRAIN, TEST, mode='overwrite')
+    split_data(FM_TRAIN, TRAIN, TEST)
 

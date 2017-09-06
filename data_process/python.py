@@ -1,10 +1,11 @@
 """Python way to do the data preprocess, more flexible but slower."""
 import cProfile
 import os
+import glob
+from concurrent import futures
 
 from conf import *
 from data_process import *
-from data_process.shell import load_data_from_hdfs
 from data_process.util import *
 
 
@@ -39,10 +40,13 @@ def convert_from_local(infile, outfile, isprd=False, reindex=False, keep_zero=Fa
     :param keep_zero: flag, True for not remove zero
     :return: None
     """
-    index_mapping = pickle.load(open(os.path.join(MODEL_DIR, 'index_dump'), 'rb')) if reindex else None
-    print('index mapping has loaded...')
+    if reindex:
+        index_mapping = pickle.load(open(os.path.join(MODEL_DIR, 'index_dump'), 'rb'))
+        print('index mapping has loaded...')
+    else:
+        index_mapping = None
     with open(infile) as libsvm:  # in python2.6, can not use with open...as..., open...as...
-        with open(os.path.join(DATA_DIR, outfile), 'w') as libfm:
+        with open(os.path.join(DATA_DIR, outfile), 'a+') as libfm:  # write and read, append
             for lineno, line in enumerate(libsvm):
             #     line = line.strip('\n').split(' ')  # convert string to list
             #     label = line.pop(0)  # string format '1' or '17040352933528'
@@ -66,15 +70,22 @@ def convert_from_local(infile, outfile, isprd=False, reindex=False, keep_zero=Fa
 
 
 if __name__ == '__main__':
-    make_path(DATA_DIR, MODEL_DIR)
+    load_data()
 
-    load_data_from_hdfs(FROM_HDFS_TRAIN, ORIGIN_TRAIN)
-    load_data_from_hdfs(FROM_HDFS_PRD, ORIGIN_PRD)
+    # concurrent way -- multiprocess
+    split(ORIGIN_TRAIN)
+    split(ORIGIN_PRD, isprd=True)
+    files = glob.glob('trainpart*')
+    if os.path.exists(os.path.join(DATA_DIR, FM_TRAIN)):
+        os.remove(os.path.join(DATA_DIR, FM_TRAIN))
+    with futures.ProcessPoolExecutor() as executor:
+        for f in files:
+            executor.submit(convert_from_local, 'temp/{0}'.format(f), FM_TRAIN)
+        # for func in executor.map(convert_from_local, files, [FM_TRAIN]*len(files)):
+        #     func
 
-    index_dic = get_new_index(ORIGIN_TRAIN)
-    pickle.dump(index_dic, open(os.path.join(MODEL_DIR, 'index_dump'), 'wb'))
-
-    convert_from_local(ORIGIN_TRAIN, FM_TRAIN)
-    split_data(FM_TRAIN, TRAIN, TEST, mode='overwrite')
+    # single process single thread way
+    # convert_from_local(ORIGIN_TRAIN, FM_TRAIN)
+    split_data(FM_TRAIN, TRAIN, TEST)
     # cProfile.run('main()')  # time analysis
 
