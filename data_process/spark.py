@@ -4,7 +4,7 @@
 but when hdfs, got error "native snappy library not available", don't know how to fix.
 @ local mode: {'local', 'local[k]', 'local[*]'} infile local
 local use single thread, local[k] use k threads, much faster, local[*] auto use the cores num threads.
-so here use the local[*] mode.
+so here use the local[*] mode. and for I/O dense application it maybe better.
 Performance: 8G data size take 130s to do the preprocess,
              compare with awk 700s and python 780s.
 """
@@ -66,7 +66,7 @@ def main():
     load_data()
     temp_path = 'hdfs://bipcluster/user/u_jrd_lv1/fm_temp'
     convert_from_local_byspark(ORIGIN_TRAIN, temp_path)
-    load_data_from_hdfs(temp_path, os.path.join(DATA_DIR, FM_TRAIN))
+    hdfs_to_local(temp_path, os.path.join(DATA_DIR, FM_TRAIN))
     split_data(FM_TRAIN, TRAIN, TEST)
 
 if __name__ == '__main__':

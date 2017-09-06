@@ -23,13 +23,10 @@ FM_TRAIN = 'train20170830'
 TRAIN = 'train'
 TEST = 'test'
 
-# embedding data filename
-EMBEDDING_TRAIN = 'embedding_train'
-EMBEDDING_PRD = 'embedding_prd'
-
 # directory
-DATA_DIR = 'data'
-MODEL_DIR = 'model'
+DATA_DIR = 'Data'
+MODEL_DIR = 'Model'
+EMBEDDING_DIR = 'Embedding'
 
 ORIGIN_TABLE = 'temp_jrd.pre_credit_user_feature'
 FROM_DT = '20170701'
@@ -57,11 +54,11 @@ TRAIN_RATIO = 0.8
 """parameter config for FM embedding 选改参数"""
 DATA_PROCESS = 'python'  # data process merhod chose from{'spark', 'shell', 'python'}
 THRESHOLD = 564
-# 1 means True, 0 means False  HIVE --whether to write to hive or not, same with HDFS
+# 1 means True, 0 means False  WRITE_HIVE --whether to write to hive or not, same with HDFS
 ISAPPEND = 1
-HIVE = 1
-HDFS = 1
-
+WRITE_HIVE = 1
+WRITE_HDFS = 1
+KEEP_LOCAL = 1
 BATCH_SIZE = 10000
 
 """Spark config"""

@@ -13,7 +13,7 @@ from mysql import trans_dic
 from transformer import *
 from data_process import clock
 from data_process.util import start_spark
-from data_process.shell import load_data_from_hdfs, gen_libsvm
+from data_process.shell import hdfs_to_local, gen_libsvm
 
 # test_dic = {'age': 'discretize(20)', 'sex': 'onehot', 'wait_pay': 'bucket(min,10,100,max);onehot()'}
 
@@ -113,8 +113,8 @@ if __name__ == '__main__':
     write_to_hdfs(train_transformed, train_temp_path)
     write_to_hdfs(prd_transformed, prd_temp_path)
 
-    load_data_from_hdfs(train_temp_path, 'spark_df_train')
-    load_data_from_hdfs(prd_temp_path, 'spark_df_prd')
+    hdfs_to_local(train_temp_path, 'spark_df_train')
+    hdfs_to_local(prd_temp_path, 'spark_df_prd')
     gen_libsvm('spark_df_train', ORIGIN_TRAIN)
     gen_libsvm('spark_df_prd', ORIGIN_PRD)
 

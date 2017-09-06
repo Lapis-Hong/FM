@@ -10,7 +10,7 @@ from pyspark.sql import SparkSession
 from conf import *
 from data_process import *
 
-__all__ = ['make_path', 'remove', 'load_data_from_hdfs', 'save_data_to_hdfs',
+__all__ = ['make_path', 'remove', 'hdfs_to_local', 'local_to_hdfs', 'local_to_hive',
            'split', 'split_data', 'split_data_fastfm', 'get_new_index',
            'get_target', 'target_feature_split', 'gen_libsvm', 'load_data',
            'create_table', 'start_spark', 'pandas_to_spark']
@@ -32,7 +32,7 @@ def remove(*args):
             print('Already remove file: {0}'.format(filename))
 
 
-def load_data_from_hdfs(hdfs_path, file_name):
+def hdfs_to_local(hdfs_path, file_name):
     """move hdfs datasets to current dir"""
     try:
         subprocess.check_call("hadoop fs -text {0}/* > {1}".format(hdfs_path, file_name), shell=True)
@@ -42,11 +42,23 @@ def load_data_from_hdfs(hdfs_path, file_name):
         print(e)
 
 
-def save_data_to_hdfs(file_name, hdfs_path):
+def local_to_hdfs(file_name, hdfs_path, keep_local=True):
     """move current dir datasets to hdfs"""
     subprocess.call("hadoop fs -mkdir -p {0}".format(hdfs_path), shell=True)
     subprocess.call("hadoop fs -put {0} {1}".format(file_name, hdfs_path), shell=True)
-    print('Already move the {0} to {1}'.format(file_name, hdfs_path))
+    print('Already move {0} to {1}'.format(file_name, hdfs_path))
+    if not keep_local:
+        remove(file_name)
+        print('Remove local file {0}'.format(file_name))
+
+
+def local_to_hive(file_name, table, keep_local=True):
+    """write local data to hive"""
+    subprocess.call("hive load data local inpath {0} into table {1};"
+                    .format(file_name, table), shell=True)
+    if not keep_local:
+        remove(file_name)
+        print('Remove local file {0}'.format(file_name))
 
 
 @clock('Successfully generate the libsvm format!')
@@ -57,6 +69,7 @@ def gen_libsvm(infile, outfile):
     subprocess.check_call(cmd, shell=True)
 
 
+@clock('Already split original data into temp/')
 def split(infile, isprd=False):
     try:
         os.mkdir('temp')
@@ -66,7 +79,7 @@ def split(infile, isprd=False):
         cmd = 'split -a 3 -d -l 200000 {0} temp/prd-part'.format(infile)
     else:
         cmd = 'split -a 3 -d -l 200000 {0} temp/train-part'.format(infile)
-    print('The shell command is:{0}'.format(cmd))
+    print('Running shell command:{0}'.format(cmd))
     subprocess.check_call(cmd, shell=True)
 
 
@@ -93,12 +106,12 @@ def get_new_index(infile, eachline=False):
         return dic  # py2.7 can use OrderedDict
 
 
-@clock('Load dataset ')
+@clock('Already load train and prd dataset!')
 def load_data():
     """make path, load dataset and dump index mapping"""
-    make_path(DATA_DIR, MODEL_DIR)
-    load_data_from_hdfs(FROM_HDFS_TRAIN, ORIGIN_TRAIN)
-    load_data_from_hdfs(FROM_HDFS_PRD, ORIGIN_PRD)
+    make_path(DATA_DIR, MODEL_DIR, EMBEDDING_DIR)
+    hdfs_to_local(FROM_HDFS_TRAIN, ORIGIN_TRAIN)
+    hdfs_to_local(FROM_HDFS_PRD, ORIGIN_PRD)
     index_dic = get_new_index(ORIGIN_TRAIN)
     pickle.dump(index_dic, open(os.path.join(MODEL_DIR, 'index_dump'), 'wb'))
 

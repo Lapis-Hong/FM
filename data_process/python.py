@@ -1,4 +1,5 @@
-"""Python way to do the data preprocess, more flexible but slower."""
+"""Python way to do the data preprocess, more flexible.  Default way
+Notice: single thread is slow, but through concurrency 8x faster"""
 import cProfile
 import os
 import glob

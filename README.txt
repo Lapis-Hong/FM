@@ -35,7 +35,7 @@ HIVE > HDFS > 本地训练 > 写入HIVE & HDFS
   生成dataframe格式数据存入hdfs然后再复制到本地生成libsvm格式数据。目前少量特征变换已跑通, 但是大量的特征变化慢且超内存)
   load data from hdfs to local
   性能测试:
-  11G 180s
+  11G 100s
 
 3.数据预处理: 只针对train数据
   target由{1, 0}转化为{1, -1}
@@ -116,9 +116,11 @@ tips2: 变量类别普遍多的情况下, k值相应要大一些
   embedding  $python embedding.py
 
 3.目录内容:
-  data／ 生成的libfm数据及其训练测试集
-  temp／ 原始数据split产生的分块数据, 包含train-part* 和 prd-part*
-  model／ 模型参数, index mapping 和 latent dump
+  Data／ 生成的libfm数据及其训练测试集
+  temp／ 原始数据split产生的分块数据, 包含train-part* 和 prd-part*  为了python并发读写加快速度
+  Model／ 模型参数, index mapping 和 latent dump
+  Embedding／ embedding data 分块数据集, 可能包括trian-part* prd-part* 和train_prd-part*
+              当本地空间不足时, 可以通过设置keep_local参数来决定是否保留本地数据
 
 ****************************************************************************************
 TODO:
