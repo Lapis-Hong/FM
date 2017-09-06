@@ -69,23 +69,29 @@ def convert_from_local(infile, outfile, isprd=False, reindex=False, keep_zero=Fa
                     print('Already convert %s samples' % (lineno + 1))
 
 
-if __name__ == '__main__':
-    load_data()
-
-    # concurrent way -- multiprocess
+def multiprocess():
+    """concurrent way -- multiprocess, much faster"""
     split(ORIGIN_TRAIN)
     split(ORIGIN_PRD, isprd=True)
-    files = glob.glob('trainpart*')
-    if os.path.exists(os.path.join(DATA_DIR, FM_TRAIN)):
-        os.remove(os.path.join(DATA_DIR, FM_TRAIN))
+    files = glob.glob('temp/train-part*')
+    remove(os.path.join(DATA_DIR, FM_TRAIN))
+    t0 = time.time()
     with futures.ProcessPoolExecutor() as executor:
         for f in files:
-            executor.submit(convert_from_local, 'temp/{0}'.format(f), FM_TRAIN)
-        # for func in executor.map(convert_from_local, files, [FM_TRAIN]*len(files)):
-        #     func
+            executor.submit(convert_from_local, f, FM_TRAIN)
+            # for func in executor.map(convert_from_local, files, [FM_TRAIN]*len(files)):
+            #     func
+    t1 = time.time()
+    print('Total convert time: {0}'.format(t1 - t0))
 
-    # single process single thread way
-    # convert_from_local(ORIGIN_TRAIN, FM_TRAIN)
+
+def main():
+    """do the data process in a pipeline"""
+    load_data()
+    multiprocess()
     split_data(FM_TRAIN, TRAIN, TEST)
+
+if __name__ == '__main__':
+    main()
     # cProfile.run('main()')  # time analysis
 

@@ -80,7 +80,8 @@ def grid_search(package=PACKAGE, method=METHOD, dim_k=DIM, iter_num=NUM_ITER, in
     return model_best
 
 
-def save_latent():
+def main():
+    """train the model and save the latent vector"""
     model_default = train(silent=False)
     latent_vec = model_default.pairwise_interactions
     path = os.path.join(MODEL_DIR, 'latent_dump.libfm')

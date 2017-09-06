@@ -4,24 +4,25 @@
 FROM_HDFS_TRAIN = 'hdfs://bipcluster/spark/vipshop/vipjrd/pre_credict_user_fm/train/20170830'
 FROM_HDFS_PRD = 'hdfs://bipcluster/spark/vipshop/vipjrd/pre_credict_user_fm/prd/20170830'
 
-TO_HDFS_TRAIN = 'hdfs://bipcluster/spark/vipshop/vipjrd/pre_credit_user_fm_embedding/train/20170830'
-TO_HDFS_PRD = 'hdfs://bipcluster/spark/vipshop/vipjrd/pre_credit_user_fm_embedding/prd/20170830'
+TO_HDFS_TRAIN = 'hdfs://bipcluster/spark/vipshop/vipjrd/pre_credit_user_fm_embedding/train/20170906'
+TO_HDFS_PRD = 'hdfs://bipcluster/spark/vipshop/vipjrd/pre_credit_user_fm_embedding/prd/20170906'
 
 # table name  must change the tablename, or delete the exist table in hive
-EMBEDDING_TABLE = 'temp_jrd.pre_credit_user_fm_embedding_20170901'
-LATENT_TABLE = 'temp_jrd.pre_credit_user_fm_latent_20170901'
+EMBEDDING_TABLE = 'temp_jrd.pre_credit_user_fm_embedding_20170906'
+LATENT_TABLE = 'temp_jrd.pre_credit_user_fm_latent_20170906'
 
-
-"""path and table config 选改参数"""
-ORIGIN_TRAIN = 'fmtrain20170830'  # original libsvm train file
+# original libsvm train prd file
+ORIGIN_TRAIN = 'fmtrain20170830'
 ORIGIN_PRD = 'fmprd20170830'
 
 # FM format total dataset
 FM_TRAIN = 'train20170830'
-# FM train dataset
+
+"""path and table config 选改参数"""
+# FM train test dataset
 TRAIN = 'train'
-# FM test dataset
 TEST = 'test'
+
 # embedding data filename
 EMBEDDING_TRAIN = 'embedding_train'
 EMBEDDING_PRD = 'embedding_prd'
@@ -34,7 +35,6 @@ ORIGIN_TABLE = 'temp_jrd.pre_credit_user_feature'
 FROM_DT = '20170701'
 TO_DT = '20170731'
 DT = '20170901'
-
 
 """parameter config for FM training 选改参数"""
 # support for two packages {'libfm', 'fastfm'}
@@ -55,12 +55,14 @@ TRAIN_RATIO = 0.8
 
 
 """parameter config for FM embedding 选改参数"""
-DATA_PROCESS = 'spark'  # data process merhod chose from{'spark', 'shell', 'python'}
+DATA_PROCESS = 'python'  # data process merhod chose from{'spark', 'shell', 'python'}
 THRESHOLD = 564
-# 1 means append mode, 0 means not append
+# 1 means True, 0 means False  HIVE --whether to write to hive or not, same with HDFS
 ISAPPEND = 1
-BATCH_SIZE = 10000
+HIVE = 1
+HDFS = 1
 
+BATCH_SIZE = 10000
 
 """Spark config"""
 DRIVER_MEMORY = '20g'

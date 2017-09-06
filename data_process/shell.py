@@ -44,10 +44,13 @@ def relabel_and_remove_zero(infile, outfile):
     subprocess.check_call(cmd, shell=True)
 
 
-if __name__ == '__main__':
+def main():
     load_data()
     # relabel(ORIGIN_TRAIN, 'temp')
     # remove_zero(ORIGIN_TRAIN, 'temp')
     # remove_zero_sed(ORIGIN_TRAIN, 'temp')
     relabel_and_remove_zero(ORIGIN_TRAIN, os.path.join(DATA_DIR, FM_TRAIN))
     split_data(FM_TRAIN, TRAIN, TEST)
+
+if __name__ == '__main__':
+    main()

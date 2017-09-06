@@ -10,18 +10,26 @@ from pyspark.sql import SparkSession
 from conf import *
 from data_process import *
 
-__all__ = ['make_path', 'load_data_from_hdfs', 'save_data_to_hdfs',
+__all__ = ['make_path', 'remove', 'load_data_from_hdfs', 'save_data_to_hdfs',
            'split', 'split_data', 'split_data_fastfm', 'get_new_index',
            'get_target', 'target_feature_split', 'gen_libsvm', 'load_data',
            'create_table', 'start_spark', 'pandas_to_spark']
 
 
 def make_path(*args):
-    """make multiple path"""
+    """make multiple paths, equivalent to linux mkdir command"""
     for dirname in args:
         if not os.path.exists(dirname):
             os.mkdir(dirname)
             print('Already make directory: {0}'.format(dirname))
+
+
+def remove(*args):
+    """remove multiple files equivalent to linux rm command"""
+    for filename in args:
+        if os.path.exists(filename):
+            os.remove(filename)
+            print('Already remove file: {0}'.format(filename))
 
 
 def load_data_from_hdfs(hdfs_path, file_name):
@@ -50,11 +58,14 @@ def gen_libsvm(infile, outfile):
 
 
 def split(infile, isprd=False):
-    os.mkdir('temp')
+    try:
+        os.mkdir('temp')
+    except OSError:
+        pass
     if isprd:
-        cmd = 'split -b -l 100000 {0} prdpart'.format(infile)
+        cmd = 'split -a 3 -d -l 200000 {0} temp/prd-part'.format(infile)
     else:
-        cmd = 'split -b -l 100000 {0} trainpart'.format(infile)
+        cmd = 'split -a 3 -d -l 200000 {0} temp/train-part'.format(infile)
     print('The shell command is:{0}'.format(cmd))
     subprocess.check_call(cmd, shell=True)
 

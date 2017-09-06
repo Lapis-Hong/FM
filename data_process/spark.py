@@ -62,11 +62,14 @@ def convert_from_hive_byspark(table, dt,  outfile, save_origin=False, origin_fil
     ss.stop()
 
 
-if __name__ == '__main__':
+def main():
     load_data()
-
     temp_path = 'hdfs://bipcluster/user/u_jrd_lv1/fm_temp'
     convert_from_local_byspark(ORIGIN_TRAIN, temp_path)
     load_data_from_hdfs(temp_path, os.path.join(DATA_DIR, FM_TRAIN))
     split_data(FM_TRAIN, TRAIN, TEST)
+
+if __name__ == '__main__':
+    main()
+
 
