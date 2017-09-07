@@ -70,18 +70,16 @@ def convert_from_local(infile, outfile, isprd=False, reindex=False, keep_zero=Fa
                     print('Already convert %s samples' % (lineno + 1))
 
 
+@clock('Total convert time')
 def multiprocess():
     """concurrent way -- multiprocess, much faster"""
     files = glob.glob('temp/train-part*')
     remove(os.path.join(DATA_DIR, FM_TRAIN))
-    t0 = time.time()
     with futures.ProcessPoolExecutor() as executor:
+        # for func in executor.map(convert_from_local, files, [FM_TRAIN]*len(files)):
+        #     func
         for f in files:
             executor.submit(convert_from_local, f, FM_TRAIN)
-            # for func in executor.map(convert_from_local, files, [FM_TRAIN]*len(files)):
-            #     func
-    t1 = time.time()
-    print('Total convert time: {0}'.format(t1 - t0))
 
 
 def main():

@@ -3,7 +3,6 @@ TODO: use spark to do the embedding process from hdfs, then directly write to hi
 """
 import os
 import glob
-import subprocess
 from concurrent import futures
 
 from pyspark import *
@@ -13,8 +12,6 @@ from conf import *
 from train import train
 from data_process import *
 from data_process.util import *
-
-sc, ss = start_spark()
 
 
 def load_latent():
@@ -310,14 +307,15 @@ def hive_pipeline(method=1):
 
 
 def main(hive=WRITE_HIVE, hdfs=WRITE_HDFS):
+    sc, ss = start_spark()
     if hdfs:
         hdfs_pipeline()
     if hive:
         hive_pipeline()
     sc.stop()
-    ss.stop()
 
 
 if __name__ == '__main__':
     main()
+
 

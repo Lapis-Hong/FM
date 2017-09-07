@@ -210,6 +210,10 @@ def start_spark(yarn_master=True):
         conf.setMaster('yarn')
     else:
         conf.setMaster('local[*]')
+    try:
+        sc.stop()
+    except:
+        pass
     sc = SparkContext(conf=conf)
     sc.setLogLevel("ERROR")  # why not work ??
     ss = SparkSession.builder.config(conf=conf).enableHiveSupport().getOrCreate()

@@ -14,7 +14,6 @@ import subprocess
 import numpy as np
 from sklearn.datasets import dump_svmlight_file
 from pyspark import *
-from pyspark.sql import SparkSession, Row
 
 from conf import *
 from data_process import *
@@ -31,7 +30,6 @@ def convert_from_local_byspark(infile, outfile, isprd=False, reindex=False, keep
         print('index mapping has loaded')
     else:
         index_mapping = None
-    sc, _ = start_spark(yarn_master=False)
     inpath = os.path.abspath(infile)
     # hadoop output dir can not be exists, must be removed
     subprocess.call('hadoop fs -rm -r {0}'.format(temp_path), shell=True)
@@ -50,7 +48,6 @@ def convert_from_local_byspark(infile, outfile, isprd=False, reindex=False, keep
 @clock('Successfully convert to the libfm format!')
 def convert_from_hive_byspark(table, dt,  outfile, save_origin=False, origin_file=None):
     """TODO: unfinished, need to debug"""
-    sc, ss = start_spark()
     spark_df = ss.sql('select * from ' + table + ' where dt={0}'.format(dt))
     pandas_df = spark_df.toPandas()
     if save_origin:
@@ -60,15 +57,15 @@ def convert_from_hive_byspark(table, dt,  outfile, save_origin=False, origin_fil
     # dummy = pd.get_dummies(pandas_df)
     # mat = dummy.as_matrix()
     dump_svmlight_file(X, y, outfile, zero_based=True, multilabel=False)
-    sc.stop()
 
 
 def main():
     load_data()
+    sc, ss = start_spark(yarn_master=False)
     convert_from_local_byspark(ORIGIN_TRAIN, FM_TRAIN)
     split_data(FM_TRAIN, TRAIN, TEST)
+    sc.stop()
 
 if __name__ == '__main__':
     main()
-
 
