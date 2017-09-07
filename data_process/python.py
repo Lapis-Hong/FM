@@ -72,8 +72,6 @@ def convert_from_local(infile, outfile, isprd=False, reindex=False, keep_zero=Fa
 
 def multiprocess():
     """concurrent way -- multiprocess, much faster"""
-    split(ORIGIN_TRAIN)
-    split(ORIGIN_PRD, isprd=True)
     files = glob.glob('temp/train-part*')
     remove(os.path.join(DATA_DIR, FM_TRAIN))
     t0 = time.time()

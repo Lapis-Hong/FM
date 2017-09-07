@@ -1,4 +1,6 @@
-"""Contains four functions to do the embedding, write embedding data to hive and hdfs"""
+"""Contains four functions to do the embedding, write embedding data to hive and hdfs
+TODO: use spark to do the embedding process from hdfs, then directly write to hive & hdfs
+"""
 import os
 import glob
 import subprocess
@@ -41,9 +43,9 @@ def latent_to_hive(latent, dim):
     print('Successfully write latent vector to hive!')
 
 
-@clock('Successfully write embedding data to local')
+@clock()
 def embedding_to_local(latent, infile, outfile, threshold=THRESHOLD,
-                       isappend=ISAPPEND, islibsvm=True, isprd=False, keep_local=True):
+                       isappend=ISAPPEND, islibsvm=True, isprd=False, keep_local=KEEP_LOCAL):
 
     """
     take the fm latent vectors as the embedding features, generate new data
@@ -55,10 +57,10 @@ def embedding_to_local(latent, infile, outfile, threshold=THRESHOLD,
                      False: for only generate the embedding category features
     :param islibsvm: True for saving the libsvm format, False for saving the dataframe format
     """
-    print('*'*30 + 'Start saving the embedding data...' + '*'*30)
+    print('*'*30 + 'Start embedding process for origin data: {0}'.format(infile) + '*'*30)
     index_mapping = pickle.load(open(os.path.join(MODEL_DIR, 'index_dump'), 'rb'))
     with open(infile) as f1:
-        with open(outfile, 'w') as f2:
+        with open(outfile, 'a+') as f2:
             total_dim, not_embedding_dim, embedding_dim = set(), set(), set()
             for lineno, line in enumerate(f1):
                 temp = line.strip('\n').split(' ')  # ['1:0','2:1','5:0']
@@ -105,13 +107,14 @@ def embedding_to_local(latent, infile, outfile, threshold=THRESHOLD,
             print('embedding feature length is {0}'.format(max(embedding_dim)*len(latent[0])))
             print('total feature length is {0}'.format(max(total_dim)))
             print('total data length is {0}'.format(lineno))
+    print('Successfully write embedding data to {0}'.format(outfile))
     if isprd:
-        local_to_hdfs(outfile, TO_HDFS_PRD, keep_local)
+        local_to_hdfs(outfile, TO_HDFS_PRD, keep_local)  # multi shell process will conflict, need improve
     else:
         local_to_hdfs(outfile, TO_HDFS_TRAIN, keep_local)
 
 
-def embedding_generator(latent, infile, hastarget=False, threshold=THRESHOLD, isappend=ISAPPEND, islibsvm=KEEP_LOCAL):
+def embedding_generator(latent, infile, hastarget=False, threshold=THRESHOLD, isappend=ISAPPEND, islibsvm=True):
     """
     Most important function, only support infile with same feature length
     :param latent: latent matrix, list
@@ -133,7 +136,7 @@ def embedding_generator(latent, infile, hastarget=False, threshold=THRESHOLD, is
             temp = line.strip('\n').split(' ')  # ['1:0','2:1','5:0']
             target.append(temp.pop(0))  # add order_id
             if hastarget:
-                target.append(targets[lineno])  # add target
+                target.append(str(targets[lineno]))  # add target
             for item in temp:
                 index, value = item.split(':')
                 if int(index) <= threshold:
@@ -163,7 +166,7 @@ def embedding_to_hive(generator, batch_size=BATCH_SIZE):
     print('The first row of embedding data: {0}'.format(line))
     print('Total embedding dim is %s' % dim)
     schema = StructType([StructField("order_id", StringType(), True),
-                         StructField("target", ByteType(), True)])
+                         StructField("target", StringType(), True)])
     for i in range(dim - 2):
         schema.add("f %d" % i, StringType(), True)
     cols = ['order_id'] + ['target'] + ['f{0}'.format(i) for i in range(dim - 2)]
@@ -174,20 +177,19 @@ def embedding_to_hive(generator, batch_size=BATCH_SIZE):
 
     batch_no = 1
     while 1:
-        df = (generator.next() for i in range(batch_size))
+        df = (generator.next() for i in range(batch_size))  # lazy eval! change to list exp cost 31s per 10000 data
         try:
             df.next()  # but loss this sample
         except StopIteration:
             break
         t0 = time.time()
-        rdd = sc.parallelize(df, 24)  # slow take 80s per 10000 data
-        t1 = time.time()
+        rdd = sc.parallelize(df, 24)  # default num_slices=2; large slices rdd faster but insert slower
+        t1 = time.time()  # sc.parallelize() 64-100s per 10000 data  include the generator process time
         # print('the first rdd {0}'.format(rdd.first()))
         embedding_df = ss.createDataFrame(rdd, schema)  # fast 1s
-        # print('the first embedding feature {0}'.format(embedding_df.first()))
-        # embedding_df.write.mode('append').saveAsTable(EMBEDDING_TABLE)
-        embedding_df.registerTempTable("temp")
-        ss.sql("insert into table {0} select * from temp".format(EMBEDDING_TABLE))  # slow 30s
+        embedding_df.write.mode('append').insertInto(EMBEDDING_TABLE)  # df API has 2 ways to write hive
+        # embedding_df.registerTempTable("temp")
+        # ss.sql("insert into table {0} select * from temp".format(EMBEDDING_TABLE))  # slow 30-100s
         t2 = time.time()
         print('write {0} embedding data into table {1}  parallelize() take{2}; insert take{3}'
               .format(batch_size*batch_no, EMBEDDING_TABLE, t1-t0, t2-t1))
@@ -218,15 +220,15 @@ def embedding_tolocal_tohive(generator, batch_size=BATCH_SIZE, keep_local=KEEP_L
             for i in range(batch_size):
                 try:
                     line = generator.next()
-                    f.write(line)
+                    f.write(' '.join(line))
                 except StopIteration:
                     break
-        batch_no += 1
         t1 = time.time()
-        local_to_hive(outpath, EMBEDDING_TABLE, keep_local)
+        local_to_hive(outpath, EMBEDDING_TABLE, keep_local)  # tolocal    tohive
         t2 = time.time()
         print('write {0} data into table {1}. to local take {2}, to hive take {3}'
               .format(batch_no*batch_size, EMBEDDING_TABLE, t1-t0, t2-t1))
+        batch_no += 1
 
 
 @clock('Successfully write all embedding data to local, using generator!')
@@ -246,7 +248,7 @@ def embedding_to_hdfs(generator, hdfs_file, batch_size=BATCH_SIZE):
     IO dense, no need much CPU, but more numslices can handle bigger batch_size"""
     batch_no = 1
     while 1:
-        # a subgenertor much faster and save memory, list.append() is too slow
+        # a subgenertor save memory, list.append() is too slow
         df = (generator.next() for i in range(batch_size))
         try:
             df.next()
@@ -254,7 +256,7 @@ def embedding_to_hdfs(generator, hdfs_file, batch_size=BATCH_SIZE):
             break
         hdfs_path = os.path.join(hdfs_file, str(batch_no))
         t0 = time.time()
-        rdd = sc.parallelize(df, 24)  # default 2 numslices; take 36s each 10000 data
+        rdd = sc.parallelize(df, 24)  # default 2 numslices; rdd 36s each 10000 data
         t1 = time.time()
         rdd.saveAsTextFile(hdfs_path)  # take 6s
         t2 = time.time()
@@ -263,33 +265,48 @@ def embedding_to_hdfs(generator, hdfs_file, batch_size=BATCH_SIZE):
         batch_no += 1
 
 
-def hdfs_pipeline():
-    """embedding to hdfs, multiprocess way"""
+@clock('Embedding to hdfs pipeline is done!')
+def hdfs_pipeline(method=1):
+    """embedding to hdfs
+    method 1: default: not use spark, first local(multiprocess way) then hive;  
+    method 2: use spark to hive"""
+    print('*' * 30 + 'Start embedding to hdfs pipeline' + '*' * 30)
     latent, latent_dim = load_latent()
-    files = os.listdir(EMBEDDING_DIR)
-    remove(files)
-    train_files = glob.glob('temp/train-part*')
-    prd_files = glob.glob('temp/prd-part*')
-    t0 = time.time()
-    with futures.ProcessPoolExecutor() as executor:  # max_workers defaults to the cpu numbers
-        for ind, (f1, f2) in enumerate(zip(train_files, prd_files)):
-            executor.submit(embedding_to_local, latent, f1, EMBEDDING_DIR+'/train-part{0}'.format(ind))
-            executor.submit(embedding_to_local, latent, f2, EMBEDDING_DIR+'/prd-part{0}'.format(ind))
-    t1 = time.time()
-    print('Total time: {0}'.format(t1 - t0))
+
+    if method == 1:  # not use spark, first local then hive
+        files = os.listdir(EMBEDDING_DIR)
+        for f in files:
+            remove(os.path.join(EMBEDDING_DIR, f))
+        train_files = glob.glob('temp/train-part*')
+        prd_files = glob.glob('temp/prd-part*')
+        # check train and prd partition files
+        if len(train_files) == 0 or len(prd_files) == 0:
+            raise IOError('no train-part* or prd-part* files, please check it in temp/')
+        with futures.ProcessPoolExecutor() as executor:  # max_workers defaults to the cpu numbers
+            for ind, (f1, f2) in enumerate(zip(train_files, prd_files)):
+                executor.submit(embedding_to_local, latent, f1, EMBEDDING_DIR+'/train-part{0}'.format(ind))
+                executor.submit(embedding_to_local, latent, f2, EMBEDDING_DIR+'/prd-part{0}'.format(ind))
+    elif method == 2:  # using spark to hive, but slow
+        train_generator = embedding_generator(latent, ORIGIN_TRAIN)
+        prd_generator = embedding_generator(latent, ORIGIN_PRD)
+        embedding_to_hdfs(train_generator, TO_HDFS_TRAIN)
+        embedding_to_hdfs(prd_generator, TO_HDFS_PRD)
 
 
-def hive_pipeline():
-    """latent & embedding to hive"""
+@clock('Embedding to hive pipeline is done!')
+def hive_pipeline(method=1):
+    """latent & embedding to hive 
+    method 1: default: not use spark, first local(single thread) then hive;  
+    method 2: use spark to hive"""
+    print('*' * 30 + 'Start embedding to hive pipeline' + '*' * 30)
     latent, latent_dim = load_latent()
     latent_to_hive(latent, latent_dim)
-
-    generator_local_hive = embedding_generator(latent, ORIGIN_PRD, hastarget=True, islibsvm=False)
-    embedding_tolocal_tohive(generator_local_hive)
-    generator_hive = embedding_generator(latent, ORIGIN_PRD, hastarget=True, islibsvm=False)
-    embedding_to_hive(generator_hive)
-    sc.stop()
-    ss.stop()
+    if method == 1:  # write to local and then local to hive
+        generator_local_hive = embedding_generator(latent, ORIGIN_PRD, hastarget=True, islibsvm=False)
+        embedding_tolocal_tohive(generator_local_hive)
+    elif method == 2:  # using spark directly write into hive, but slow
+        generator_hive = embedding_generator(latent, ORIGIN_PRD, hastarget=True, islibsvm=False)
+        embedding_to_hive(generator_hive)
 
 
 def main(hive=WRITE_HIVE, hdfs=WRITE_HDFS):
@@ -297,60 +314,10 @@ def main(hive=WRITE_HIVE, hdfs=WRITE_HDFS):
         hdfs_pipeline()
     if hive:
         hive_pipeline()
+    sc.stop()
+    ss.stop()
 
 
 if __name__ == '__main__':
     main()
-    # train_path = os.path.join(MODEL_DIR, EMBEDDING_TRAIN)
-    # prd_path = os.path.join(MODEL_DIR, EMBEDDING_PRD)
-    # remove(train_path, prd_path)
-    # train_files = glob.glob('temp/train-part*')
-    # prd_files = glob.glob('temp/prd-part*')
-    #
-    # latent, latent_dim = load_latent()
-    # latent_to_hive(latent, latent_dim)
-    #
-    # """embedding to local, multiprocess way"""
-    # t0 = time.time()
-    # with futures.ProcessPoolExecutor() as executor:  # max_workers defaults to the cpu numbers
-    #     for f1, f2 in zip(train_files, prd_files):
-    #         executor.submit(embedding_to_local, f1, train_path)
-    #         executor.submit(embedding_to_local, f2, prd_path)
-    # t1 = time.time()
-    # print('Total time: {0}'.format(t1-t0))
-    #
-    # """embedding to local, single thread way"""
-    # # embedding_to_local(latent, infile=ORIGIN_TRAIN, outfile=train_path)
-    # # embedding_to_local(latent, infile=ORIGIN_PRD, outfile=prd_path)
-    # save_data_to_hdfs(train_path, TO_HDFS_TRAIN)
-    # save_data_to_hdfs(prd_path, TO_HDFS_PRD)
-    #
-    # # """embedding to local using generator, multiprocess way"""
-    # # t0 = time.time()
-    # # with futures.ProcessPoolExecutor() as executor:
-    # #     for f1, f2 in zip(train_files, prd_files):
-    # #         executor.submit(embedding_to_local_generator, embedding_generator(latent, f1), train_path)
-    # #         executor.submit(embedding_to_local_generator, embedding_generator(latent, f2), prd_path)
-    # # t1 = time.time()
-    # # print('Total time: {0}'.format(t1 - t0))
-    #
-    # """embedding to local, single thread way"""
-    # # train_generator = embedding_generator(latent, ORIGIN_TRAIN)
-    # # prd_generator = embedding_generator(latent, ORIGIN_PRD)
-    # # embedding_to_local_generator(train_generator, train_path)
-    # # embedding_to_local_generator(prd_generator, prd_path)
-    # save_data_to_hdfs(train_path, TO_HDFS_TRAIN)
-    # save_data_to_hdfs(prd_path, TO_HDFS_PRD)
-    #
-    # # embedding to hdfs
-    # train_generator = embedding_generator(latent, ORIGIN_TRAIN)
-    # prd_generator = embedding_generator(latent, ORIGIN_PRD)
-    # embedding_to_hdfs(train_generator, TO_HDFS_TRAIN)
-    # embedding_to_hdfs(prd_generator, TO_HDFS_PRD)
-    #
-    # # embedding to hive
-    # generator_hive = embedding_generator(latent, ORIGIN_PRD, hastarget=True, islibsvm=False)
-    # embedding_to_hive(generator_hive)
-    # sc.stop()
-    # ss.stop()
-    #
+

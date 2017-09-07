@@ -33,9 +33,9 @@ HIVE > HDFS > 本地训练 > 写入HIVE & HDFS
   若不希望embedding的feature配其他特征变换即可。
   (feature_transform.py中提供了绕过特征工程直接调用spark做transform的方法,
   生成dataframe格式数据存入hdfs然后再复制到本地生成libsvm格式数据。目前少量特征变换已跑通, 但是大量的特征变化慢且超内存)
-  load data from hdfs to local
+  加载原始数据 load_data() (包括创建目录, 从hdfs > local, 生成index mapping, split原始数据为了后续并发读写)
   性能测试:
-  11G 100s
+  11G 200s
 
 3.数据预处理: 只针对train数据
   target由{1, 0}转化为{1, -1}
@@ -97,10 +97,12 @@ tips2: 变量类别普遍多的情况下, k值相应要大一些
 (2)embedding数据直接写入HDFS, 此时需要写入两份数据, 一份train, 一份prd
 此时格式需libsvm格式
 
-性能测试: (此部分是整个project的性能瓶颈, spark写入hive非常慢, 此处不知r-server上是否使用集群)
-写入HIVE: 11G 262万行 33360s
-写入HDFS: 11G 262万行 两份数据train和prd 1666s(python 多进程先写到local再转到hdfs)  20000s(直接用spark写入hdfs)
+性能测试: (此部分是整个project的性能瓶颈, spark写入hive非常慢)
+写入HIVE(一份数据): 30G 262万行   9000s(先写到本地, 再写到hive)  34000s(直接用spark写入9-10h)
+写入HDFS(两份数据train和prd): (30G 262万行)x2 1600s(python 多进程先写到local再转到hdfs)  40000s(直接用spark写入hdfs)
 
+默认均是用先到本地再到hive&hdfs方式做embedding
+TODO: 从hdfs上通过spark操作直接生成embedding数据，生成rdd过程更快 然后读写到hdfs和hive性能会优一些
 ****************************************************************************************
 四.使用指南
 
@@ -116,14 +118,15 @@ tips2: 变量类别普遍多的情况下, k值相应要大一些
   embedding  $python embedding.py
 
 3.目录内容:
-  Data／ 生成的libfm数据及其训练测试集
+  data／ 生成的libfm数据及其训练测试集
   temp／ 原始数据split产生的分块数据, 包含train-part* 和 prd-part*  为了python并发读写加快速度
-  Model／ 模型参数, index mapping 和 latent dump
-  Embedding／ embedding data 分块数据集, 可能包括trian-part* prd-part* 和train_prd-part*
+  model／ 模型参数, index mapping 和 latent dump
+  embedding／ embedding data 分块数据集, 可能包括trian-part* prd-part* 和train_prd-part*
               当本地空间不足时, 可以通过设置keep_local参数来决定是否保留本地数据
 
 ****************************************************************************************
 TODO:
+spark写入hive&hdfs性能问题 (sc.parallelize(), rdd.saveAsTextFile(), ss.sql()性能差)
 libffm的数据预处理: 需要field:feature:value格式
 feature_transform.py 大数据下内存报错和性能问题
 

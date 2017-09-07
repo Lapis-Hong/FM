@@ -24,9 +24,9 @@ TRAIN = 'train'
 TEST = 'test'
 
 # directory
-DATA_DIR = 'Data'
-MODEL_DIR = 'Model'
-EMBEDDING_DIR = 'Embedding'
+DATA_DIR = 'data'
+MODEL_DIR = 'model'
+EMBEDDING_DIR = 'embedding'
 
 ORIGIN_TABLE = 'temp_jrd.pre_credit_user_feature'
 FROM_DT = '20170701'
@@ -59,7 +59,7 @@ ISAPPEND = 1
 WRITE_HIVE = 1
 WRITE_HDFS = 1
 KEEP_LOCAL = 1
-BATCH_SIZE = 10000
+BATCH_SIZE = 50000
 
 """Spark config"""
 DRIVER_MEMORY = '20g'

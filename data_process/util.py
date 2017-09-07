@@ -49,12 +49,11 @@ def local_to_hdfs(file_name, hdfs_path, keep_local=True):
     print('Already move {0} to {1}'.format(file_name, hdfs_path))
     if not keep_local:
         remove(file_name)
-        print('Remove local file {0}'.format(file_name))
 
 
 def local_to_hive(file_name, table, keep_local=True):
     """write local data to hive"""
-    subprocess.call("hive load data local inpath {0} into table {1};"
+    subprocess.call("hive -e 'load data local inpath \"{0}\" into table {1}'"
                     .format(file_name, table), shell=True)
     if not keep_local:
         remove(file_name)
@@ -108,12 +107,14 @@ def get_new_index(infile, eachline=False):
 
 @clock('Already load train and prd dataset!')
 def load_data():
-    """make path, load dataset and dump index mapping"""
+    """make path, load dataset, dump index mapping and split data"""
     make_path(DATA_DIR, MODEL_DIR, EMBEDDING_DIR)
     hdfs_to_local(FROM_HDFS_TRAIN, ORIGIN_TRAIN)
     hdfs_to_local(FROM_HDFS_PRD, ORIGIN_PRD)
     index_dic = get_new_index(ORIGIN_TRAIN)
     pickle.dump(index_dic, open(os.path.join(MODEL_DIR, 'index_dump'), 'wb'))
+    split(ORIGIN_TRAIN)
+    split(ORIGIN_PRD, isprd=True)
 
 
 def get_target(infile):
